@@ -18,7 +18,7 @@
                 "--harmony",
                 "--no-deprecation"
             ],
-            "program": "${workspaceFolder}/src/api.ts",
+            "program": "${workspaceFolder}/src/hvac.ts",
             "preLaunchTask": "tsc: build - tsconfig.json",
             "outputCapture": "std",
             "smartStep": true,

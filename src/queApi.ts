@@ -1,52 +1,9 @@
-import * as dotenv from 'dotenv';
-import fetch, { Response, Request } from 'node-fetch';
 import * as fs from 'fs';
-
-dotenv.config();
-
-const username = String(process.env.USERNAME);
-const password = String(process.env.PASSWORD);
-const deviceName = 'js-testing';
-
-// fetch error handler
-function httpErrorHandler(response : Response) : Response {
-  if (!response.ok) {
-    throw Error(response.statusText);
-  }
-  return response;
-}
-
-// fetch request wrapper / http manager
-function request(request: Request) : Promise<object>{
-  return fetch(request)
-    .then(httpErrorHandler)
-    .then(res => res.json())
-    .catch(error => error);
-}
-
-// custom type declerations
-interface apiToken {
-  expires: number;
-  token: string;
-}
-
-interface tokenCollection {
-  refreshToken: apiToken;
-  bearerToken: apiToken;
-}
-
-// temp logger
-class Logger {
-  logFile = './messages.log';
-
-  log(message: string){
-    fs.appendFile(this.logFile, `${Date()}: ${message}\n`, err => {
-      if (err){
-        throw Error(err.message);
-      }
-    });
-  }
-}
+import { Request } from 'node-fetch';
+import { apiToken, tokenCollection, PowerState, validApiCommands } from './types';
+import { Logger } from './tempTools';
+import { request } from './requestManager';
+import { queApiCommands } from './queCommands';
 
 // Defines an api interface for the Que cloud service
 export default class QueApi {
@@ -60,6 +17,8 @@ export default class QueApi {
   private deviceId: string;
   private username: string;
   private password: string;
+  private commandUrl!: string;
+  private queryUrl!: string;
   actronSerial: string | undefined;
   actronId: string | undefined;
   refreshToken: apiToken;
@@ -83,7 +42,7 @@ export default class QueApi {
         } else {
           this.deviceId = this.generateClientId();
           registeredDevices.push({name: this.deviceName, id: this.deviceId});
-          fs.writeFileSync(this.deviceIdFile, String(registeredDevices));
+          fs.writeFileSync(this.deviceIdFile, JSON.stringify(registeredDevices));
         }
       }
     }
@@ -101,6 +60,9 @@ export default class QueApi {
 
     await this.tokenGenerator();
     await this.getAcSystems();
+    this.commandUrl = `${this.basePath}/api/v0/client/ac-systems/cmds/send?serial=${this.actronSerial}`;
+    this.queryUrl = `${this.basePath}/api/v0/client/ac-systems/status/latest?serial=${this.actronSerial}`;
+
   }
 
   generateClientId () {
@@ -209,116 +171,67 @@ export default class QueApi {
 
   async getStatus() {
 
-    let waitCount = 0;
-    while (this.actronSerial === undefined && waitCount <= 100) {
-      waitCount++;
-      this.log.log(JSON.stringify(`waiting on serial number ${waitCount}`));
-    }
-    const url = `${this.basePath}/api/v0/client/ac-systems/status/latest?serial=${this.actronSerial}`;
-    const preparedRequest = new Request (url, {
+    const preparedRequest = new Request (this.queryUrl, {
       method: 'GET',
       headers: {'Authorization': `Bearer ${this.bearerToken.token}`, 'Accept': 'application/json'},
     });
     const result = await request(preparedRequest)
       .then(response => {
         const masterCurrentSettings: object = response['lastKnownState']['UserAirconSettings'];
-        const masterCurrentState: object = response['lastKnownState']['LiveAircon'];
+        const compressorCurrentState: object = response['lastKnownState']['LiveAircon'];
+        const masterCurrentState: object = response['lastKnownState']['MasterInfo'];
+        const zoneCurrentStateSettings: object[] = response['lastKnownState']['RemoteZoneInfo'];
+        const zoneCurrentStatus: object[] = [];
+        for (const zone of zoneCurrentStateSettings) {
+          const sensorId = Object.keys(zone['Sensors'])[0];
+          // Skip the zone entries that arent populated with a remote sensor
+          if (zone['Sensors'][sensorId]['NV_Kind'] === 'MASTER_CONTROLLER') {
+            continue;
+          }
+          const zoneData: object = {
+            zoneName: zone['NV_Title'],
+            currentTemp: zone['LiveTemp_oC'],
+            currentHumidity: zone['LiveHumidity_pc'],
+            maxHeatSetPoint: zone['MaxHeatSetpoint'],
+            minHeatSetPoint: zone['MinHeatSetpoint'],
+            maxCoolSetPoint: zone['MaxCoolSetpoint'],
+            minCoolSetPoint: zone['MinCoolSetpoint'],
+            currentHeatingSetTemp: zone['TemperatureSetpoint_Heat_oC'],
+            currentCoolingSetTemp: zone['TemperatureSetpoint_Cool_oC'],
+            zoneSensorBattery: zone['Sensors'][sensorId]['Battery_pc'],
+          };
+          zoneCurrentStatus.push(zoneData);
+        }
         const currentStatus: object = {
-          powerState: (masterCurrentSettings['isOn'] === true) ? PowerState.On : PowerState.Off,
+          powerState: (masterCurrentSettings['isOn'] === true) ? PowerState.ON : PowerState.OFF,
           climateMode: masterCurrentSettings['Mode'],
           fanMode: masterCurrentSettings['FanMode'],
-          coolingSetTemp: masterCurrentSettings['TemperatureSetpoint_Cool_oC'],
-          heatingSetTemp: masterCurrentSettings['TemperatureSetpoint_Heat_oC'],
-          chasingTemp: masterCurrentState['CompressorChasingTemperature'],
-          currentTemp: masterCurrentState['CompressorLiveTemperature'],
+          awayMode: masterCurrentSettings['AwayMode'],
+          quietMode: masterCurrentSettings['QuietMode'],
+          masterCoolingSetTemp: masterCurrentSettings['TemperatureSetpoint_Cool_oC'],
+          masterHeatingSetTemp: masterCurrentSettings['TemperatureSetpoint_Heat_oC'],
+          masterCurrentTemp: masterCurrentState['LiveTemp_oC'],
+          masterCurrentHumidity: masterCurrentState['LiveHumidity_pc'],
+          outdoorTemp: masterCurrentState['LiveOutdoorTemp_oC'],
+          compressorChasingTemp: compressorCurrentState['CompressorChasingTemperature'],
+          compressorCurrentTemp: compressorCurrentState['CompressorLiveTemperature'],
+          zoneCurrentStatus: zoneCurrentStatus,
         };
         return currentStatus;
       });
     return result;
   }
 
-}
-
-enum PowerState {
-  On = 'ON',
-  Off = 'OFF',
-  Unknown = 'UNKNOWN',
-}
-
-enum ClimateMode {
-  Automatic = 'AUTO',
-  Cool = 'COOL',
-  Heat = 'HEAT',
-  Fan = 'FAN',
-  Unknown = 'UNKNOWN',
-}
-
-enum FanMode {
-  Automatic = 'AUTO',
-  Low = 'LOW',
-  Medium = 'MEDIUM',
-  High = 'HIGH',
-  Unknown = 'UNKNOWN',
-}
-
-export class HvacUnit {
-
-  private readonly name: string;
-  type: string | undefined;
-  apiInterface!: QueApi;
-
-  powerState: PowerState = PowerState.Unknown;
-  climateMode: ClimateMode = ClimateMode.Unknown;
-  fanMode: FanMode = FanMode.Unknown;
-  coolingSetTemp = 0;
-  heatingSetTemp = 0;
-  chasingTemp = 0;
-  currentTemp = 0;
-
-  constructor(name: string) {
-    this.name = name;
+  async runCommand(commandType: validApiCommands, coolTemp = 20.0, heatTemp = 20.0) {
+    const command = queApiCommands[commandType](coolTemp, heatTemp);
+    this.log.log(JSON.stringify(command));
+    const preparedRequest = new Request (this.commandUrl, {
+      method: 'POST',
+      headers: {'Authorization': `Bearer ${this.bearerToken.token}`, 'Content-Type': 'application/json'},
+      body: JSON.stringify(command),
+    });
+    const result = request(preparedRequest).then(res => res['type']);
+    return result;
   }
 
-  async actronQueApi(username: string, password: string, serialNumber: string | undefined = undefined) {
-    this.type = 'actronQue';
-    this.apiInterface = new QueApi(username, password, this.name, serialNumber);
-    return await this.apiInterface.initalizer();
-  }
-
-  async getStatus() {
-    const currentStatus = await this.apiInterface.getStatus();
-    this.powerState = currentStatus['powerState'];
-    this.climateMode = currentStatus['climateMode'];
-    this.fanMode = currentStatus['fanMode'];
-    this.coolingSetTemp = currentStatus['coolingSetTemp'];
-    this.heatingSetTemp = currentStatus['heatingSetTemp'];
-    this.chasingTemp = currentStatus['chasingTemp'];
-    this.currentTemp = currentStatus['currentTemp'];
-    return currentStatus;
-  }
-
-  // async setPowerState() {}
-
-  // async setClimateMode () {}
-
-  // async setFanMode () {}
-
-  // async setCoolingTemp () {}
-
-  // async setHeatingTemp () {}
-
 }
-
-
-const newApi = new HvacUnit(deviceName);
-newApi.actronQueApi(username, password)
-  .then(() => newApi.getStatus());
-//newApi.getStatus();
-setTimeout(() => console.log(newApi), 3000);
-// (async () => {
-//   const newApi = new HvacUnit(deviceName);
-//   await newApi.actronQueApi(username, password);
-//   newApi.getStatus();
-//   //setTimeout(() => newApi.getStatus(), 5000);
-//   setTimeout(() => console.log(newApi), 2000);
-// })();
