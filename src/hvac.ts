@@ -1,5 +1,5 @@
 import QueApi from './queApi';
-import { PowerState, FanMode, ClimateMode, validApiCommands } from './types';
+import { PowerState, FanMode, ClimateMode, validApiCommands, ZoneStatus, HvacStatus } from './types';
 import { username, password, deviceName } from './tempTools';
 
 export class HvacUnit {
@@ -20,7 +20,7 @@ export class HvacUnit {
   compressorChasingTemp = 0;
   compressorCurrentTemp = 0;
   outdoorTemp = 0;
-  zoneData: object[] = [];
+  zoneData: ZoneStatus[] = [];
 
   constructor(name: string) {
     this.name = name;
@@ -32,21 +32,21 @@ export class HvacUnit {
     return await this.apiInterface.initalizer();
   }
 
-  async getStatus() {
+  async getStatus(): Promise<HvacStatus> {
     const currentStatus = await this.apiInterface.getStatus();
-    this.powerState = currentStatus['powerState'];
-    this.climateMode = currentStatus['climateMode'];
-    this.fanMode = currentStatus['fanMode'];
-    this.masterCoolingSetTemp = currentStatus['masterCoolingSetTemp'];
-    this.masterHeatingSetTemp = currentStatus['masterHeatingSetTemp'];
-    this.compressorChasingTemp = currentStatus['compressorChasingTemp'];
-    this.compressorCurrentTemp = currentStatus['compressorCurrentTemp'];
-    this.awayMode = currentStatus['awayMode'];
-    this.quietMode = currentStatus['quietMode'];
-    this.outdoorTemp = currentStatus['outdoorTemp'];
-    this.masterCurrentTemp = currentStatus['masterCurrentTemp'];
-    this.masterHumidity = currentStatus['masterCurrentHumidity'];
-    this.zoneData = currentStatus['zoneCurrentStatus'];
+    this.powerState = currentStatus.powerState;
+    this.climateMode = currentStatus.climateMode;
+    this.fanMode = currentStatus.fanMode;
+    this.masterCoolingSetTemp = currentStatus.masterCoolingSetTemp;
+    this.masterHeatingSetTemp = currentStatus.masterHeatingSetTemp;
+    this.compressorChasingTemp = currentStatus.compressorChasingTemp;
+    this.compressorCurrentTemp = currentStatus.compressorCurrentTemp;
+    this.awayMode = currentStatus.awayMode;
+    this.quietMode = currentStatus.quietMode;
+    this.outdoorTemp = currentStatus.outdoorTemp;
+    this.masterCurrentTemp = currentStatus.masterCurrentTemp;
+    this.masterHumidity = currentStatus.masterCurrentHumidity;
+    this.zoneData = currentStatus.zoneCurrentStatus;
     return currentStatus;
   }
 

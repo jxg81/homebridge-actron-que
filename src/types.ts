@@ -1,13 +1,3 @@
-export interface apiToken {
-    expires: number;
-    token: string;
-  }
-
-export interface tokenCollection {
-    refreshToken: apiToken;
-    bearerToken: apiToken;
-  }
-
 export enum PowerState {
     ON = 'ON',
     OFF = 'OFF',
@@ -57,3 +47,46 @@ export enum validApiCommands {
     QUIET_MODE_ON = 'QUIET_MODE_ON',
     QUIET_MODE_OFF = 'QUIET_MODE_OFF',
   }
+
+export interface apiToken {
+    expires: number;
+    token: string;
+  }
+
+export interface tokenCollection {
+    refreshToken: apiToken;
+    bearerToken: apiToken;
+  }
+
+export interface ZoneStatus {
+    zoneName: string;
+    zoneIndex: number;
+    zoneEnabled: boolean;
+    currentTemp: number;
+    currentHumidity: number;
+    maxHeatSetPoint: number;
+    minHeatSetPoint: number;
+    maxCoolSetPoint: number;
+    minCoolSetPoint: number;
+    currentHeatingSetTemp: number;
+    currentCoolingSetTemp: number;
+    zoneSensorBattery: number;
+}
+
+export interface HvacStatus {
+  powerState: PowerState;
+  climateMode: ClimateMode;
+  fanMode: FanMode;
+  awayMode: boolean;
+  quietMode: boolean;
+  masterCoolingSetTemp: number;
+  masterHeatingSetTemp: number;
+  masterCurrentTemp: number;
+  masterCurrentHumidity: number;
+  outdoorTemp: number;
+  compressorChasingTemp: number;
+  compressorCurrentTemp: number;
+  zoneCurrentStatus: ZoneStatus[];
+  }
+
+

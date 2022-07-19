@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { Request } from 'node-fetch';
-import { apiToken, tokenCollection, PowerState, validApiCommands } from './types';
+import { apiToken, tokenCollection, PowerState, validApiCommands, ZoneStatus, HvacStatus } from './types';
 import { Logger } from './tempTools';
 import { request } from './requestManager';
 import { queApiCommands } from './queCommands';
@@ -169,7 +169,7 @@ export default class QueApi {
       });
   }
 
-  async getStatus() {
+  async getStatus(): Promise<HvacStatus> {
 
     const preparedRequest = new Request (this.queryUrl, {
       method: 'GET',
@@ -181,15 +181,23 @@ export default class QueApi {
         const compressorCurrentState: object = response['lastKnownState']['LiveAircon'];
         const masterCurrentState: object = response['lastKnownState']['MasterInfo'];
         const zoneCurrentStateSettings: object[] = response['lastKnownState']['RemoteZoneInfo'];
-        const zoneCurrentStatus: object[] = [];
+        const zoneEnabledState: object = response['lastKnownState']['UserAirconSettings']['EnabledZones'];
+        const zoneCurrentStatus: ZoneStatus[] = [];
+
+        let loopIndex = 0;
         for (const zone of zoneCurrentStateSettings) {
+          const zoneIndex = loopIndex;
+          loopIndex++;
           const sensorId = Object.keys(zone['Sensors'])[0];
           // Skip the zone entries that arent populated with a remote sensor
           if (zone['Sensors'][sensorId]['NV_Kind'] === 'MASTER_CONTROLLER') {
             continue;
           }
-          const zoneData: object = {
+
+          const zoneData: ZoneStatus = {
             zoneName: zone['NV_Title'],
+            zoneIndex: zoneIndex,
+            zoneEnabled: zoneEnabledState[zoneIndex],
             currentTemp: zone['LiveTemp_oC'],
             currentHumidity: zone['LiveHumidity_pc'],
             maxHeatSetPoint: zone['MaxHeatSetpoint'],
@@ -202,7 +210,8 @@ export default class QueApi {
           };
           zoneCurrentStatus.push(zoneData);
         }
-        const currentStatus: object = {
+
+        const currentStatus: HvacStatus = {
           powerState: (masterCurrentSettings['isOn'] === true) ? PowerState.ON : PowerState.OFF,
           climateMode: masterCurrentSettings['Mode'],
           fanMode: masterCurrentSettings['FanMode'],
