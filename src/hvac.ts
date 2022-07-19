@@ -1,16 +1,18 @@
 import QueApi from './queApi';
-import { PowerState, FanMode, ClimateMode, validApiCommands, ZoneStatus, HvacStatus } from './types';
+import { PowerState, FanMode, ClimateMode, CompressorMode, validApiCommands, ZoneStatus, HvacStatus } from './types';
 import { username, password, deviceName } from './tempTools';
 
 export class HvacUnit {
 
   private readonly name: string;
-  type: string | undefined;
+  type = '';
+  serail = '';
   apiInterface!: QueApi;
 
   powerState: PowerState = PowerState.UNKNOWN;
   climateMode: ClimateMode = ClimateMode.UNKNOWN;
   fanMode: FanMode = FanMode.UNKNOWN;
+  compressorMode: CompressorMode = CompressorMode.UNKNOWN;
   awayMode = false;
   quietMode = false;
   masterCoolingSetTemp = 0;
@@ -26,16 +28,19 @@ export class HvacUnit {
     this.name = name;
   }
 
-  async actronQueApi(username: string, password: string, serialNumber: string | undefined = undefined) {
+  async actronQueApi(username: string, password: string, serialNumber = '') {
     this.type = 'actronQue';
     this.apiInterface = new QueApi(username, password, this.name, serialNumber);
-    return await this.apiInterface.initalizer();
+    await this.apiInterface.initalizer();
+    this.serail = this.apiInterface.actronSerial;
+    return this.serail;
   }
 
   async getStatus(): Promise<HvacStatus> {
     const currentStatus = await this.apiInterface.getStatus();
     this.powerState = currentStatus.powerState;
     this.climateMode = currentStatus.climateMode;
+    this.compressorMode = currentStatus.compressorMode;
     this.fanMode = currentStatus.fanMode;
     this.masterCoolingSetTemp = currentStatus.masterCoolingSetTemp;
     this.masterHeatingSetTemp = currentStatus.masterHeatingSetTemp;
@@ -173,12 +178,12 @@ export class HvacUnit {
 //   .then(() => myAC.getStatus()).then(() => myAC.setPowerState());
 // //newApi.getStatus();
 // setTimeout(() => console.log(myAC), 6000);
-(async () => {
-  const myAC = new HvacUnit(deviceName);
-  await myAC.actronQueApi(username, password);
-  await myAC.getStatus();
-  //const newState = await myAC.setFanModeAuto();
-  //setTimeout(() => console.log(newState), 5000);
-  //setTimeout(() => console.log(typeof newState), 5000);
-  console.log(myAC);
-})();
+// (async () => {
+//   const myAC = new HvacUnit(deviceName);
+//   const serialNo = await myAC.actronQueApi(username, password);
+//   await myAC.getStatus();
+//   //const newState = await myAC.setFanModeAuto();
+//   //setTimeout(() => console.log(newState), 5000);
+//   //setTimeout(() => console.log(typeof newState), 5000);
+//   console.log(myAC);
+// })();

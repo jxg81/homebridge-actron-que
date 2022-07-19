@@ -12,37 +12,37 @@ export default class QueApi {
   private readonly basePath: string = 'https://que.actronair.com.au';
   private readonly refreshTokenFile: string = './access.token';
   private readonly bearerTokenFile: string = './bearer.token';
-  private readonly deviceIdFile: string = './clientid.token';
-  private deviceName: string;
-  private deviceId: string;
+  private readonly apiDeviceIdFile: string = './clientid.token';
+  private apiDeviceName: string;
+  private apiClientId: string;
   private username: string;
   private password: string;
   private commandUrl!: string;
   private queryUrl!: string;
-  actronSerial: string | undefined;
-  actronId: string | undefined;
+  actronSerial = '';
+  actronSystemId = '';
   refreshToken: apiToken;
   bearerToken: apiToken;
 
-  constructor(username: string, password: string, deviceName: string, actronSerial: string | undefined = undefined) {
-    this.deviceId = '';
+  constructor(username: string, password: string, deviceName: string, actronSerial = '') {
+    this.apiClientId = '';
     this.username = username;
     this.password = password;
-    this.deviceName = deviceName;
+    this.apiDeviceName = deviceName;
     this.actronSerial = actronSerial;
 
-    if (!fs.existsSync(this.deviceIdFile)) {
-      this.deviceId = this.generateClientId();
-      fs.writeFileSync(this.deviceIdFile, `[{"name": "${this.deviceName}", "id": "${this.deviceId}"}]`);
+    if (!fs.existsSync(this.apiDeviceIdFile)) {
+      this.apiClientId = this.generateClientId();
+      fs.writeFileSync(this.apiDeviceIdFile, `[{"name": "${this.apiDeviceName}", "id": "${this.apiClientId}"}]`);
     } else {
-      const registeredDevices: object[] = JSON.parse(fs.readFileSync(this.deviceIdFile).toString());
+      const registeredDevices: object[] = JSON.parse(fs.readFileSync(this.apiDeviceIdFile).toString());
       for (const registeredDevice of registeredDevices) {
         if (registeredDevice['name'] === deviceName) {
-          this.deviceId = registeredDevice['id'];
+          this.apiClientId = registeredDevice['id'];
         } else {
-          this.deviceId = this.generateClientId();
-          registeredDevices.push({name: this.deviceName, id: this.deviceId});
-          fs.writeFileSync(this.deviceIdFile, JSON.stringify(registeredDevices));
+          this.apiClientId = this.generateClientId();
+          registeredDevices.push({name: this.apiDeviceName, id: this.apiClientId});
+          fs.writeFileSync(this.apiDeviceIdFile, JSON.stringify(registeredDevices));
         }
       }
     }
@@ -68,7 +68,7 @@ export default class QueApi {
   generateClientId () {
 
     const randomNumber = Math.round(Math.random() * (99999 - 10001) + 10001);
-    return this.deviceName + '-' + randomNumber;
+    return this.apiDeviceName + '-' + randomNumber;
   }
 
   private async getRefreshToken() {
@@ -80,8 +80,8 @@ export default class QueApi {
       body: new URLSearchParams({
         username: this.username,
         password: this.password,
-        deviceName: this.deviceName,
-        deviceUniqueIdentifier: this.deviceId,
+        deviceName: this.apiDeviceName,
+        deviceUniqueIdentifier: this.apiClientId,
         client: 'ios',
       }),
     });
@@ -153,14 +153,14 @@ export default class QueApi {
         // if there is no serial provided and only one system then assume this is the target system
         if (systemList.length === 1) {
           this.actronSerial = systemList[0]['serial'];
-          this.actronId = systemList[0]['id'];
-          this.log.log(`located serail number ${this.actronSerial} with ID of ${this.actronId}`);
+          this.actronSystemId = systemList[0]['id'];
+          this.log.log(`located serail number ${this.actronSerial} with ID of ${this.actronSystemId}`);
           // if there is multiple systems make sure the provided serail matches one of the retrieved items
-        } else if (systemList.length > 1 && this.actronSerial !== null) {
+        } else if (systemList.length > 1 && this.actronSerial !== '') {
           for (const system of systemList) {
             if (system['serial'] === this.actronSerial) {
-              this.actronId = system['id'];
-              this.log.log(`located serail number ${this.actronSerial} with ID of ${this.actronId}`);
+              this.actronSystemId = system['id'];
+              this.log.log(`located serail number ${this.actronSerial} with ID of ${this.actronSystemId}`);
             }
           }
         } else {
@@ -214,6 +214,7 @@ export default class QueApi {
         const currentStatus: HvacStatus = {
           powerState: (masterCurrentSettings['isOn'] === true) ? PowerState.ON : PowerState.OFF,
           climateMode: masterCurrentSettings['Mode'],
+          compressorMode: compressorCurrentState['CompressorMode'],
           fanMode: masterCurrentSettings['FanMode'],
           awayMode: masterCurrentSettings['AwayMode'],
           quietMode: masterCurrentSettings['QuietMode'],

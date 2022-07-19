@@ -12,6 +12,13 @@ export enum ClimateMode {
     UNKNOWN = 'UNKNOWN',
   }
 
+export enum CompressorMode {
+    COOL = 'COOL',
+    HEAT = 'HEAT',
+    OFF = 'OFF',
+    UNKNOWN = 'UNKNOWN',
+  }
+
 export enum FanMode {
     AUTO = 'AUTO',
     LOW = 'LOW',
@@ -76,6 +83,7 @@ export interface ZoneStatus {
 export interface HvacStatus {
   powerState: PowerState;
   climateMode: ClimateMode;
+  compressorMode: CompressorMode;
   fanMode: FanMode;
   awayMode: boolean;
   quietMode: boolean;
