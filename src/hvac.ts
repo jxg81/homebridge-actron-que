@@ -1,12 +1,12 @@
 import QueApi from './queApi';
-import { PowerState, FanMode, ClimateMode, CompressorMode, validApiCommands, ZoneStatus, HvacStatus } from './types';
-import { username, password, deviceName } from './tempTools';
+import { PowerState, FanMode, ClimateMode, CompressorMode, validApiCommands, ZoneStatus, HvacStatus, CommandResult } from './types';
+import { Logger } from 'homebridge';
 
 export class HvacUnit {
 
   private readonly name: string;
   type = '';
-  serail = '';
+  serialNo = '';
   apiInterface!: QueApi;
 
   powerState: PowerState = PowerState.UNKNOWN;
@@ -24,16 +24,16 @@ export class HvacUnit {
   outdoorTemp = 0;
   zoneData: ZoneStatus[] = [];
 
-  constructor(name: string) {
+  constructor(name: string, private readonly log: Logger) {
     this.name = name;
   }
 
-  async actronQueApi(username: string, password: string, serialNumber = '') {
+  async actronQueApi(username: string, password: string, serialNo = '') {
     this.type = 'actronQue';
-    this.apiInterface = new QueApi(username, password, this.name, serialNumber);
+    this.apiInterface = new QueApi(username, password, this.name, this.log, serialNo);
     await this.apiInterface.initalizer();
-    this.serail = this.apiInterface.actronSerial;
-    return this.serail;
+    this.serialNo = this.apiInterface.actronSerial;
+    return this.serialNo;
   }
 
   async getStatus(): Promise<HvacStatus> {
@@ -55,135 +55,191 @@ export class HvacUnit {
     return currentStatus;
   }
 
-  async setPowerState() {
+  async setPowerStateOn(): Promise<PowerState> {
     if (this.powerState === PowerState.UNKNOWN) {
       await this.getStatus();
     }
-    let result: Promise<string>;
     if (this.powerState === PowerState.ON) {
-      result = this.apiInterface.runCommand(validApiCommands.OFF)
-        .then(() => this.powerState=PowerState.OFF);
+      return PowerState.ON;
     } else {
-      result = this.apiInterface.runCommand(validApiCommands.ON)
-        .then(() => this.powerState=PowerState.ON);
+      const response = await this.apiInterface.runCommand(validApiCommands.ON);
+      if (response === CommandResult.SUCCESS) {
+        this.powerState=PowerState.ON;
+      } else {
+        await this.getStatus();
+      }
     }
-    return result;
+    return this.powerState;
   }
 
-  async setHeatTemp(heatTemp: number) {
+  async setPowerStateOff(): Promise<PowerState> {
+    if (this.powerState === PowerState.UNKNOWN) {
+      await this.getStatus();
+    }
+    if (this.powerState === PowerState.OFF) {
+      return PowerState.OFF;
+    } else {
+      const response = await this.apiInterface.runCommand(validApiCommands.OFF);
+      if (response === CommandResult.SUCCESS) {
+        this.powerState=PowerState.OFF;
+      } else {
+        await this.getStatus();
+      }
+    }
+    return this.powerState;
+  }
+
+  async setHeatTemp(heatTemp: number): Promise<number> {
     const coolTemp = 0;
-    const result = this.apiInterface.runCommand(validApiCommands.HEAT_SET_POINT, coolTemp, heatTemp)
-      .then(() => this.masterHeatingSetTemp=heatTemp);
-    return result;
+    const response = await this.apiInterface.runCommand(validApiCommands.HEAT_SET_POINT, coolTemp, heatTemp);
+    if (response === CommandResult.SUCCESS) {
+      this.masterHeatingSetTemp=heatTemp;
+    } else {
+      await this.getStatus();
+    }
+    return this.masterHeatingSetTemp;
   }
 
-  async setCoolTemp(coolTemp: number) {
+  async setCoolTemp(coolTemp: number): Promise<number> {
     const heatTemp = 0;
-    const result = this.apiInterface.runCommand(validApiCommands.COOL_SET_POINT, coolTemp, heatTemp)
-      .then(() => this.masterCoolingSetTemp=coolTemp);
-    return result;
-  }
-
-  async setHeatCoolTemp(coolTemp: number, heatTemp: number) {
-    const result = this.apiInterface.runCommand(validApiCommands.HEAT_COOL_SET_POINT, coolTemp, heatTemp)
-      .then(() => {
-        this.masterCoolingSetTemp=coolTemp;
-        this.masterHeatingSetTemp=heatTemp;
-      });
-    return result;
-  }
-
-  async setClimateModeAuto() {
-    const result = this.apiInterface.runCommand(validApiCommands.CLIMATE_MODE_AUTO)
-      .then(() => this.climateMode=ClimateMode.AUTO);
-    return result;
-  }
-
-  async setClimateModeCool() {
-    const result = this.apiInterface.runCommand(validApiCommands.CLIMATE_MODE_COOL)
-      .then(() => this.climateMode=ClimateMode.COOL);
-    return result;
-  }
-
-  async setClimateModeHeat() {
-    const result = this.apiInterface.runCommand(validApiCommands.CLIMATE_MODE_HEAT)
-      .then(() => this.climateMode=ClimateMode.HEAT);
-    return result;
-  }
-
-  async setClimateModeFan() {
-    const result = this.apiInterface.runCommand(validApiCommands.CLIMATE_MODE_FAN)
-      .then(() => this.climateMode=ClimateMode.FAN);
-    return result;
-  }
-
-  async setFanModeAuto() {
-    const result = this.apiInterface.runCommand(validApiCommands.FAN_MODE_AUTO)
-      .then(() => this.fanMode=FanMode.AUTO);
-    return result;
-  }
-
-  async setFanModeLow() {
-    const result = this.apiInterface.runCommand(validApiCommands.FAN_MODE_LOW)
-      .then(() => this.fanMode=FanMode.LOW);
-    return result;
-  }
-
-  async setFanModeMedium() {
-    const result = this.apiInterface.runCommand(validApiCommands.FAN_MODE_MEDIUM)
-      .then(() => this.fanMode=FanMode.MEDIUM);
-    return result;
-  }
-
-  async setFanModeHigh() {
-    const result = this.apiInterface.runCommand(validApiCommands.FAN_MODE_HIGH)
-      .then(() => this.fanMode=FanMode.HIGH);
-    return result;
-  }
-
-  async setAwayMode() {
-    if (this.powerState === PowerState.UNKNOWN) {
+    const response = await this.apiInterface.runCommand(validApiCommands.COOL_SET_POINT, coolTemp, heatTemp);
+    if (response === CommandResult.SUCCESS) {
+      this.masterCoolingSetTemp=coolTemp;
+    } else {
       await this.getStatus();
     }
-    let result: Promise<boolean>;
-    if (this.awayMode === true) {
-      result = this.apiInterface.runCommand(validApiCommands.AWAY_MODE_OFF)
-        .then(() => this.awayMode=false);
-    } else {
-      result = this.apiInterface.runCommand(validApiCommands.AWAY_MODE_ON)
-        .then(() => this.awayMode=true);
-    }
-    return result;
+    return this.masterCoolingSetTemp;
   }
 
-  async setQuietMode() {
-    if (this.powerState === PowerState.UNKNOWN) {
+
+  async setHeatCoolTemp(coolTemp: number, heatTemp: number): Promise<number[]> {
+    const response = await this.apiInterface.runCommand(validApiCommands.HEAT_COOL_SET_POINT, coolTemp, heatTemp);
+    if (response === CommandResult.SUCCESS) {
+      this.masterCoolingSetTemp=coolTemp;
+      this.masterHeatingSetTemp=heatTemp;
+    } else {
       await this.getStatus();
     }
-    let result: Promise<boolean>;
-    if (this.quietMode === true) {
-      result = this.apiInterface.runCommand(validApiCommands.QUIET_MODE_OFF)
-        .then(() => this.quietMode=false);
+    return [this.masterCoolingSetTemp, this.masterHeatingSetTemp=heatTemp];
+  }
+
+  async setClimateModeAuto(): Promise<ClimateMode> {
+    const response = await this.apiInterface.runCommand(validApiCommands.CLIMATE_MODE_AUTO);
+    if (response === CommandResult.SUCCESS) {
+      this.climateMode=ClimateMode.AUTO;
     } else {
-      result = this.apiInterface.runCommand(validApiCommands.QUIET_MODE_ON)
-        .then(() => this.quietMode=true);
+      await this.getStatus();
     }
-    return result;
+    return this.climateMode;
+  }
+
+  async setClimateModeCool(): Promise<ClimateMode> {
+    const response = await this.apiInterface.runCommand(validApiCommands.CLIMATE_MODE_COOL);
+    if (response === CommandResult.SUCCESS) {
+      this.climateMode=ClimateMode.COOL;
+    } else {
+      await this.getStatus();
+    }
+    return this.climateMode;
+  }
+
+  async setClimateModeHeat(): Promise<ClimateMode> {
+    const response = await this.apiInterface.runCommand(validApiCommands.CLIMATE_MODE_HEAT);
+    if (response === CommandResult.SUCCESS) {
+      this.climateMode=ClimateMode.HEAT;
+    } else {
+      await this.getStatus();
+    }
+    return this.climateMode;
+  }
+
+  async setClimateModeFan(): Promise<ClimateMode> {
+    const response = await this.apiInterface.runCommand(validApiCommands.CLIMATE_MODE_FAN);
+    if (response === CommandResult.SUCCESS) {
+      this.climateMode=ClimateMode.FAN;
+    } else {
+      await this.getStatus();
+    }
+    return this.climateMode;
+  }
+
+  async setFanModeAuto(): Promise<FanMode> {
+    const response = await this.apiInterface.runCommand(validApiCommands.FAN_MODE_AUTO);
+    if (response === CommandResult.SUCCESS) {
+      this.fanMode=FanMode.AUTO;
+    } else {
+      await this.getStatus();
+    }
+    return this.fanMode;
+  }
+
+  async setFanModeLow(): Promise<FanMode> {
+    const response = await this.apiInterface.runCommand(validApiCommands.FAN_MODE_LOW);
+    if (response === CommandResult.SUCCESS) {
+      this.fanMode=FanMode.LOW;
+    } else {
+      await this.getStatus();
+    }
+    return this.fanMode;
+  }
+
+  async setFanModeMedium(): Promise<FanMode> {
+    const response = await this.apiInterface.runCommand(validApiCommands.FAN_MODE_MEDIUM);
+    if (response === CommandResult.SUCCESS) {
+      this.fanMode=FanMode.MEDIUM;
+    } else {
+      await this.getStatus();
+    }
+    return this.fanMode;
+  }
+
+  async setFanModeHigh(): Promise<FanMode> {
+    const response = await this.apiInterface.runCommand(validApiCommands.FAN_MODE_HIGH);
+    if (response === CommandResult.SUCCESS) {
+      this.fanMode=FanMode.HIGH;
+    } else {
+      await this.getStatus();
+    }
+    return this.fanMode;
+  }
+
+  async setAwayModeOn(): Promise<boolean> {
+    const response = await this.apiInterface.runCommand(validApiCommands.AWAY_MODE_ON);
+    if (response === CommandResult.SUCCESS) {
+      this.awayMode=true;
+    } else {
+      await this.getStatus();
+    }
+    return this.awayMode;
+  }
+
+  async setAwayModeOff(): Promise<boolean> {
+    const response = await this.apiInterface.runCommand(validApiCommands.AWAY_MODE_OFF);
+    if (response === CommandResult.SUCCESS) {
+      this.awayMode=false;
+    } else {
+      await this.getStatus();
+    }
+    return this.awayMode;
+  }
+
+  async setQuietModeOn(): Promise<boolean> {
+    const response = await this.apiInterface.runCommand(validApiCommands.QUIET_MODE_ON);
+    if (response === CommandResult.SUCCESS) {
+      this.quietMode=true;
+    } else {
+      await this.getStatus();
+    }
+    return this.quietMode;
+  }
+
+  async setQuietModeOff(): Promise<boolean> {
+    const response = await this.apiInterface.runCommand(validApiCommands.QUIET_MODE_OFF);
+    if (response === CommandResult.SUCCESS) {
+      this.quietMode=false;
+    } else {
+      await this.getStatus();
+    }
+    return this.quietMode;
   }
 }
-
-
-// const myAC = new HvacUnit(deviceName);
-// myAC.actronQueApi(username, password)
-//   .then(() => myAC.getStatus()).then(() => myAC.setPowerState());
-// //newApi.getStatus();
-// setTimeout(() => console.log(myAC), 6000);
-// (async () => {
-//   const myAC = new HvacUnit(deviceName);
-//   const serialNo = await myAC.actronQueApi(username, password);
-//   await myAC.getStatus();
-//   //const newState = await myAC.setFanModeAuto();
-//   //setTimeout(() => console.log(newState), 5000);
-//   //setTimeout(() => console.log(typeof newState), 5000);
-//   console.log(myAC);
-// })();

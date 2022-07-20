@@ -1,3 +1,8 @@
+export enum CommandResult {
+  SUCCESS = 'SUCCESS',
+  FAILURE = 'FAILURE',
+}
+
 export enum PowerState {
     ON = 'ON',
     OFF = 'OFF',
@@ -68,6 +73,7 @@ export interface tokenCollection {
 export interface ZoneStatus {
     zoneName: string;
     zoneIndex: number;
+    sensorId: string;
     zoneEnabled: boolean;
     currentTemp: number;
     currentHumidity: number;

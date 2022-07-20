@@ -97,6 +97,7 @@ export const queApiCommands = {
     },
     }),
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   COOL_SET_POINT: (coolTemp: number, _heatTemp: number) => (
     {'command':{
       'UserAirconSettings.TemperatureSetpoint_Cool_oC': coolTemp,

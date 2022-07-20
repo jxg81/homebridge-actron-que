@@ -1,5 +1,5 @@
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
-import { ClimateMode, CompressorMode } from './types';
+import { ClimateMode, CompressorMode, FanMode } from './types';
 import { ActronQuePlatform } from './platform';
 
 /**
@@ -14,10 +14,6 @@ export class MasterControllerAccessory {
    * These are just used to create a working example
    * You should implement your own code to track the state of your accessory
    */
-  private exampleStates = {
-    On: false,
-    Brightness: 100,
-  };
 
   constructor(
     private readonly platform: ActronQuePlatform,
@@ -28,7 +24,10 @@ export class MasterControllerAccessory {
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Actron')
       .setCharacteristic(this.platform.Characteristic.Model, this.platform.hvacInstance.type)
-      .setCharacteristic(this.platform.Characteristic.SerialNumber, this.platform.hvacInstance.serail);
+      .setCharacteristic(this.platform.Characteristic.SerialNumber, this.platform.hvacInstance.serialNo);
+
+    // attempt to get current status before controlling device.. dont know if this will work.
+    this.platform.hvacInstance.getStatus();
 
     // Get or create the heater cooler service.
     this.service = this.accessory.getService(this.platform.Service.HeaterCooler)
@@ -55,6 +54,34 @@ export class MasterControllerAccessory {
 
     this.service.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
       .onGet(this.getCurrentTemperature.bind(this));
+
+    this.service.getCharacteristic(this.platform.Characteristic.HeatingThresholdTemperature)
+      .setProps({
+        minValue: 10,
+        maxValue: 26,
+        minStep: 0.5,
+      })
+      .onGet(this.getHeatingThresholdTemperature.bind(this))
+      .onSet(this.setHeatingThresholdTemperature.bind(this));
+
+    this.service.getCharacteristic(this.platform.Characteristic.CoolingThresholdTemperature)
+      .setProps({
+        minValue: 20,
+        maxValue: 32,
+        minStep: 0.5,
+      })
+      .onGet(this.getCoolingThresholdTemperature.bind(this))
+      .onSet(this.setCoolingThresholdTemperature.bind(this));
+
+    //This currently does not allow for continous fan mode at any of the speed options.
+    this.service.getCharacteristic(this.platform.Characteristic.RotationSpeed)
+      .setProps({
+        minValue: 0,
+        maxValue: 4,
+        minStep: 1,
+      })
+      .onSet(this.setFanMode.bind(this))
+      .onGet(this.getFanMode.bind(this));
     /**
      * Creating multiple services of the same type.
      *
@@ -101,13 +128,15 @@ export class MasterControllerAccessory {
    * These are sent when the user changes the state of an accessory, for example, turning on a Light bulb.
    */
   async setPowerState(value: CharacteristicValue) {
-    // implement your own code to turn your device on/off
-    const currentPowerState = (this.platform.hvacInstance.powerState === 'ON') ? 1 : 0;
-    const requestedPowerState = value;
-    if (currentPowerState !== requestedPowerState) {
-      this.platform.hvacInstance.setPowerState();
+    switch (value) {
+      case 0:
+        this.platform.hvacInstance.setPowerStateOff();
+        break;
+      case 1:
+        this.platform.hvacInstance.setPowerStateOn();
+        break;
     }
-    this.platform.log.debug('Set Characteristic PowerToggle ->', requestedPowerState);
+    this.platform.log.debug('Set Characteristic Power Sucess -> ', value);
   }
 
   /**
@@ -138,8 +167,8 @@ export class MasterControllerAccessory {
    * Handle "SET" requests from HomeKit
    * These are sent when the user changes the state of an accessory, for example, changing the Brightness
    */
-  async getClimateMode(): Promise<CharacteristicValue | undefined> {
-    let currentMode = 0;
+  async getClimateMode(): Promise<CharacteristicValue> {
+    let currentMode: number;
     const compressorMode = this.platform.hvacInstance.compressorMode;
     switch (compressorMode) {
       case CompressorMode.OFF:
@@ -152,8 +181,8 @@ export class MasterControllerAccessory {
         currentMode = 3;
         break;
       default:
+        currentMode = 0;
         this.platform.log.debug('Get Characteristic CompressorMode failed ->', compressorMode);
-        return;
     }
     this.platform.log.debug('Get Characteristic CompressorMode Sucess -> ', compressorMode);
     return currentMode;
@@ -177,7 +206,7 @@ export class MasterControllerAccessory {
   }
 
   async getTargetHeaterCoolerState(): Promise<CharacteristicValue> {
-    let currentMode = 0;
+    let currentMode: number;
     const climateMode = this.platform.hvacInstance.climateMode;
     switch (climateMode) {
       case ClimateMode.AUTO:
@@ -190,6 +219,7 @@ export class MasterControllerAccessory {
         currentMode = this.platform.Characteristic.TargetHeaterCoolerState.COOL;
         break;
       default:
+        currentMode = 0;
         this.platform.log.debug('Get Characteristic ClimateSettingfailed ->', climateMode);
     }
     this.platform.log.debug('Get Characteristic ClimateSetting Sucess -> ', climateMode);
@@ -202,4 +232,70 @@ export class MasterControllerAccessory {
     return currentTemp;
   }
 
+  async setHeatingThresholdTemperature(value: CharacteristicValue) {
+    this.platform.hvacInstance.setHeatTemp(value as number);
+    this.platform.log.debug('Set Characteristic ClimateSetting Sucess -> ', value);
+  }
+
+  async getHeatingThresholdTemperature(): Promise<CharacteristicValue> {
+    const targetTemp = this.platform.hvacInstance.masterHeatingSetTemp;
+    this.platform.log.debug('Get Characteristic ClimateSetting Sucess -> ', targetTemp);
+    return targetTemp;
+  }
+
+  async setCoolingThresholdTemperature(value: CharacteristicValue) {
+    this.platform.hvacInstance.setCoolTemp(value as number);
+    this.platform.log.debug('Set Characteristic ClimateSetting Sucess -> ', value);
+  }
+
+  async getCoolingThresholdTemperature(): Promise<CharacteristicValue> {
+    const targetTemp = this.platform.hvacInstance.masterCoolingSetTemp;
+    this.platform.log.debug('Get Characteristic ClimateSetting Sucess -> ', targetTemp);
+    return targetTemp;
+  }
+
+  async setFanMode(value: CharacteristicValue) {
+    switch (value) {
+      case 0:
+        this.platform.hvacInstance.setFanModeAuto();
+        break;
+      case 1:
+        this.platform.hvacInstance.setFanModeLow();
+        break;
+      case 2:
+        this.platform.hvacInstance.setFanModeMedium();
+        break;
+      case 3:
+        this.platform.hvacInstance.setFanModeHigh();
+        break;
+      default:
+        this.platform.log.debug('Set Characteristic FanSpeed failed ->', value);
+        return;
+    }
+    this.platform.log.debug('Set Characteristic FanSpeed Sucess -> ', value);
+  }
+
+  async getFanMode(): Promise<CharacteristicValue> {
+    let currentMode: number;
+    const fanMode = this.platform.hvacInstance.fanMode;
+    switch (fanMode) {
+      case FanMode.AUTO || FanMode.AUTO_CONT:
+        currentMode = 0;
+        break;
+      case FanMode.LOW || FanMode.LOW_CONT:
+        currentMode = 1;
+        break;
+      case FanMode.MEDIUM || FanMode.MEDIUM_CONT:
+        currentMode = 2;
+        break;
+      case FanMode.HIGH || FanMode.HIGH_CONT:
+        currentMode = 3;
+        break;
+      default:
+        currentMode = 0;
+        this.platform.log.debug('Get Characteristic FanSpeed failed ->', currentMode);
+    }
+    this.platform.log.debug('Get Characteristic FanSpeed Sucess -> ', currentMode);
+    return currentMode;
+  }
 }
