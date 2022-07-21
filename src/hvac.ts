@@ -15,6 +15,7 @@ export class HvacUnit {
   compressorMode: CompressorMode = CompressorMode.UNKNOWN;
   awayMode = false;
   quietMode = false;
+  controlAllZones = false;
   masterCoolingSetTemp = 0;
   masterHeatingSetTemp = 0;
   masterCurrentTemp = 0;
@@ -24,7 +25,7 @@ export class HvacUnit {
   outdoorTemp = 0;
   zoneData: ZoneStatus[] = [];
 
-  constructor(name: string, private readonly log: Logger) {
+  constructor(name: string, private readonly log: Logger, readonly alwaysFollowMaster = true) {
     this.name = name;
   }
 
@@ -48,6 +49,7 @@ export class HvacUnit {
     this.compressorCurrentTemp = currentStatus.compressorCurrentTemp;
     this.awayMode = currentStatus.awayMode;
     this.quietMode = currentStatus.quietMode;
+    this.controlAllZones = currentStatus.controlAllZones;
     this.outdoorTemp = currentStatus.outdoorTemp;
     this.masterCurrentTemp = currentStatus.masterCurrentTemp;
     this.masterHumidity = currentStatus.masterCurrentHumidity;
@@ -241,5 +243,25 @@ export class HvacUnit {
       await this.getStatus();
     }
     return this.quietMode;
+  }
+
+  async setControlAllZonesOn(): Promise<boolean> {
+    const response = await this.apiInterface.runCommand(validApiCommands.CONTROL_ALL_ZONES_ON);
+    if (response === CommandResult.SUCCESS) {
+      this.controlAllZones=true;
+    } else {
+      await this.getStatus();
+    }
+    return this.controlAllZones;
+  }
+
+  async setControlAllZonesOff(): Promise<boolean> {
+    const response = await this.apiInterface.runCommand(validApiCommands.CONTROL_ALL_ZONES_OFF);
+    if (response === CommandResult.SUCCESS) {
+      this.controlAllZones=false;
+    } else {
+      await this.getStatus();
+    }
+    return this.controlAllZones;
   }
 }

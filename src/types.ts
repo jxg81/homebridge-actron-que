@@ -58,6 +58,8 @@ export enum validApiCommands {
     AWAY_MODE_OFF = 'AWAY_MODE_OFF',
     QUIET_MODE_ON = 'QUIET_MODE_ON',
     QUIET_MODE_OFF = 'QUIET_MODE_OFF',
+    CONTROL_ALL_ZONES_ON = 'CONTROL_ALL_ZONES_ON',
+    CONTROL_ALL_ZONES_OFF = 'CONTROL_ALL_ZONES_OFF',
   }
 
 export interface apiToken {
@@ -93,6 +95,7 @@ export interface HvacStatus {
   fanMode: FanMode;
   awayMode: boolean;
   quietMode: boolean;
+  controlAllZones: boolean;
   masterCoolingSetTemp: number;
   masterHeatingSetTemp: number;
   masterCurrentTemp: number;

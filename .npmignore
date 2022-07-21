@@ -135,3 +135,6 @@ web_modules/
 
 # Temp holder for token perssitence
 *.token
+
+# API response Samples
+api_samples

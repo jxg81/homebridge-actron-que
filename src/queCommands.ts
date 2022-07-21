@@ -120,6 +120,20 @@ export const queApiCommands = {
     },
     }),
 
+  CONTROL_ALL_ZONES_ON: () => (
+    {'command':{
+      'MasterInfo.ControlAllZones': true,
+      'type':'set-settings',
+    },
+    }),
+
+  CONTROL_ALL_ZONES_OFF: () => (
+    {'command':{
+      'MasterInfo.ControlAllZones': false,
+      'type':'set-settings',
+    },
+    }), 
+
   AWAY_MODE_ON: () => (
     {'command':{
       'UserAirconSettings.AwayMode': true,

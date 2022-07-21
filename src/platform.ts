@@ -1,7 +1,7 @@
 import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
-import { MasterControllerAccessory as MasterControllerAccessory } from './platformAccessory';
+import { MasterControllerAccessory as MasterControllerAccessory } from './masterControllerAccessory';
 import { HvacUnit } from './hvac';
 
 export class ActronQuePlatform implements DynamicPlatformPlugin {
@@ -14,6 +14,7 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
   private readonly username: string = '';
   private readonly password: string = '';
   private readonly serialNo: string = '';
+  private readonly zonesFollowMaster: boolean = true;
   hvacInstance!: HvacUnit;
 
   constructor(
@@ -29,6 +30,12 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
       this.log.debug('Serial number should only be specified if you have multiple systems in your Que account', this.serialNo);
     } else {
       this.serialNo = '';
+    }
+    if (config['zonesFollowMaster']) {
+      this.zonesFollowMaster = config['zonesFollowMaster'];
+      this.log.debug('Will zones follow chnages to the master controller automatically?', this.zonesFollowMaster);
+    } else {
+      this.zonesFollowMaster = true;
     }
     this.log.debug('Finished initializing platform:', this.config.name);
 
@@ -62,7 +69,7 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
   async discoverDevices() {
 
     // Instantiate an instance of HvacUnit and connect the actronQueApi
-    this.hvacInstance = new HvacUnit(this.clientName, this.log);
+    this.hvacInstance = new HvacUnit(this.clientName, this.log, this.zonesFollowMaster);
     const hvacSerial = await this.hvacInstance.actronQueApi(this.username, this.password, this.serialNo);
     const devices = [
       {

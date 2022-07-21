@@ -58,19 +58,31 @@ export default class QueApi {
     this.bearerToken = JSON.parse(fs.readFileSync(this.bearerTokenFile).toString());
   }
 
-  async manageApiRequest(requestContent: Request, retries = 2) {
+  async manageApiRequest(requestContent: Request, retries = 3, delay = 3) {
+    // manage api requests with a retry on error with delay
+
+    // Simple function to cause a delay between retries
+    const wait = (time = delay) => {
+      return new Promise<void>((resolve) => {
+        setTimeout(() => {
+          resolve();
+        }, time * 1000);
+      });
+    };
+
     const response = await fetch(requestContent);
     switch (response.status) {
 
       case (200):
         return response.json();
 
-      // If the bearer token has expired mid request then generate new token, update request and retry
+      // If the bearer token has expired then generate new token, update request and retry
       // error will be generated after max retries is reached, default of 2
       case(401):
         await this.tokenGenerator();
         requestContent.headers.set('Authorization', `Bearer ${this.bearerToken.token}`);
         if (retries > 0) {
+          await wait();
           return this.manageApiRequest(requestContent, retries -1);
         } else {
           throw Error(`Maximum retires excced on failed Authorisation: http status code = ${response.status}`);
@@ -82,6 +94,7 @@ export default class QueApi {
       // observed occasional gateway timeouts when querying the API. This allows for a couple of retrys before failing
       case(504):
         if (retries > 0) {
+          await wait();
           return this.manageApiRequest(requestContent, retries -1);
         } else {
           throw Error(`Maximum retires excced on gateway timeout: http status code = ${response.status}`);
@@ -218,7 +231,7 @@ export default class QueApi {
       }
       //if there serial cannot be located then we will log an error that serial was not found
     } else {
-      this.log.error(`could not identify target device from list of returned systems: ${systemList} `);
+      this.log.error(`could not identify target device from list of returned systems:\n ${systemList} `);
     }
   }
 
@@ -240,6 +253,7 @@ export default class QueApi {
     // zone index number is based on the order in the returned array, we add the zone index to the
     // results as we need this to send commands later. The zone data is enclosed behid the serial number
     // we are also capturing the serial number of the sensor to be used later in the homebridge UUID generation
+    // also mapping the zone enabled sate into this field as its traccked seperate to the zone info
     let loopIndex = 0;
     for (const zone of zoneCurrentStateSettings) {
       const zoneIndex = loopIndex;
@@ -283,6 +297,7 @@ export default class QueApi {
       fanMode: masterCurrentSettings['FanMode'],
       awayMode: masterCurrentSettings['AwayMode'],
       quietMode: masterCurrentSettings['QuietMode'],
+      controlAllZones: masterCurrentState['ControlAllZones'],
       masterCoolingSetTemp: masterCurrentSettings['TemperatureSetpoint_Cool_oC'],
       masterHeatingSetTemp: masterCurrentSettings['TemperatureSetpoint_Heat_oC'],
       masterCurrentTemp: masterCurrentState['LiveTemp_oC'],
@@ -292,7 +307,7 @@ export default class QueApi {
       compressorCurrentTemp: compressorCurrentState['CompressorLiveTemperature'],
       zoneCurrentStatus: zoneCurrentStatus,
     };
-    this.log.debug(`got current status from Actron Cloud: ${currentStatus}`);
+    this.log.debug(`got current status from Actron Cloud:\n ${JSON.stringify(currentStatus)}`);
     return currentStatus;
   }
 
@@ -308,11 +323,11 @@ export default class QueApi {
     });
     const response = await this.manageApiRequest(preparedRequest);
     if (response.type === 'ack') {
-      this.log.debug(`Command sucessful, 'ack' recieved from Actron Cloud: ${JSON.stringify(response.value)}`);
+      this.log.debug(`Command sucessful, 'ack' recieved from Actron Cloud:\n ${JSON.stringify(response.value)}`);
       return CommandResult.SUCCESS;
     } else {
-      this.log.debug(`Command failed, NO 'ack' recieved from Actron Cloud: 
-      Command attempted: ${JSON.stringify(command)}
+      this.log.debug(`Command failed, NO 'ack' recieved from Actron Cloud:\n 
+      Command attempted: ${JSON.stringify(command)}\n
       API response: ${JSON.stringify(response)}`);
       return CommandResult.FAILURE;
     }
