@@ -22,7 +22,7 @@ This is the first working version. I will update readme with further details, bu
 ## Configuration
 Add the following to your homebridge configuration
 
-```json
+```
     "platforms": [
         {
             "name": "ActronQue",
