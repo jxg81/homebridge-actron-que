@@ -132,7 +132,7 @@ export const queApiCommands = {
       'MasterInfo.ControlAllZones': false,
       'type':'set-settings',
     },
-    }), 
+    }),
 
   AWAY_MODE_ON: () => (
     {'command':{
