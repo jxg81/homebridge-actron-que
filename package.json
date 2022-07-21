@@ -2,7 +2,7 @@
   "private": true,
   "displayName": "Homebridge Actron Que",
   "name": "homebridge-actron-que",
-  "version": "0.0.1",
+  "version": "0.1.0-beta",
   "description": "Homebridge plugin for controlling Actron Que controller systems",
   "license": "Apache-2.0",
   "repository": {
