@@ -1,3 +1,6 @@
+import { HvacUnit } from './hvac';
+import { HvacZone } from './hvacZone';
+
 export enum CommandResult {
   SUCCESS = 'SUCCESS',
   FAILURE = 'FAILURE',
@@ -60,6 +63,17 @@ export enum validApiCommands {
     QUIET_MODE_OFF = 'QUIET_MODE_OFF',
     CONTROL_ALL_ZONES_ON = 'CONTROL_ALL_ZONES_ON',
     CONTROL_ALL_ZONES_OFF = 'CONTROL_ALL_ZONES_OFF',
+    ZONE_ENABLE = 'ZONE_ENABLE',
+    ZONE_DISABLE = 'ZONE_DISABLE',
+    ZONE_COOL_SET_POINT = 'ZONE_COOL_SET_POINT',
+    ZONE_HEAT_SET_POINT = 'ZONE_HEAT_SET_POINT',
+  }
+
+export interface DiscoveredDevices {
+    type: string;
+    uniqueId: string;
+    displayName: string;
+    instance: HvacZone | HvacUnit;
   }
 
 export interface apiToken {

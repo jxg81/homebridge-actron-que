@@ -161,5 +161,37 @@ export const queApiCommands = {
       'type':'set-settings',
     },
     }),
+
+  ZONE_ENABLE: (_coolTemp: number, _heatTemp: number, zoneIndex: number) => (
+    {'command':{
+      [`UserAirconSettings.EnabledZones[${zoneIndex}]`]:true,
+      'type':'set-settings',
+    },
+    }),
+
+  ZONE_DISABLE: (_coolTemp: number, _heatTemp: number, zoneIndex: number) => (
+    {'command':{
+      [`UserAirconSettings.EnabledZones[${zoneIndex}]`]:false,
+      'type':'set-settings',
+    },
+    }),
+
+  ZONE_COOL_SET_POINT: (coolTemp: number, _heatTemp: number, zoneIndex: number) => (
+    {'command':{
+      [`RemoteZoneInfo[${zoneIndex}].TemperatureSetpoint_Cool_oC`]: coolTemp,
+      'type':'set-settings',
+    },
+    }),
+
+  ZONE_HEAT_SET_POINT: (_coolTemp: number, heatTemp: number, zoneIndex: number) => (
+    {'command':{
+      [`RemoteZoneInfo[${zoneIndex}].TemperatureSetpoint_Heat_oC`]: heatTemp,
+      'type':'set-settings',
+    },
+    }),
 };
+
+
+
+
 

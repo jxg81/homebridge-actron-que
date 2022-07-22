@@ -1,10 +1,11 @@
 import QueApi from './queApi';
 import { PowerState, FanMode, ClimateMode, CompressorMode, validApiCommands, ZoneStatus, HvacStatus, CommandResult } from './types';
 import { Logger } from 'homebridge';
+import { HvacZone } from './hvacZone';
 
 export class HvacUnit {
 
-  private readonly name: string;
+  readonly name: string;
   type = '';
   serialNo = '';
   apiInterface!: QueApi;
@@ -24,6 +25,7 @@ export class HvacUnit {
   compressorCurrentTemp = 0;
   outdoorTemp = 0;
   zoneData: ZoneStatus[] = [];
+  zoneInstances: HvacZone[] = [];
 
   constructor(name: string, private readonly log: Logger, readonly alwaysFollowMaster = true) {
     this.name = name;
@@ -54,6 +56,18 @@ export class HvacUnit {
     this.masterCurrentTemp = currentStatus.masterCurrentTemp;
     this.masterHumidity = currentStatus.masterCurrentHumidity;
     this.zoneData = currentStatus.zoneCurrentStatus;
+
+    // logic here is compare zoneData with zoneInstances.
+    // if a zone DOES exist in zoneInstance for corresponding zoneData then run .updateStatus on the instance with the data
+    // if a zone DOES NOT exist in zoneInstance for corresponding zoneData entry then create the zoneInstance
+    for (const zone of this.zoneData) {
+      const targetInstance = this.zoneInstances.find(zoneInstance => zoneInstance.sensorId === zone.sensorId);
+      if (targetInstance) {
+        targetInstance.updateStatus(zone);
+      } else {
+        this.zoneInstances.push(new HvacZone(this.log, this, zone));
+      }
+    }
     return currentStatus;
   }
 

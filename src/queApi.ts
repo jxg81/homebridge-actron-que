@@ -311,10 +311,11 @@ export default class QueApi {
     return currentStatus;
   }
 
-  async runCommand(commandType: validApiCommands, coolTemp = 20.0, heatTemp = 20.0): Promise<CommandResult> {
+  // defaulting zoneIndex here to 255 as this should be an invalid value, but maybe i should do soemthing different
+  async runCommand(commandType: validApiCommands, coolTemp = 20.0, heatTemp = 20.0, zoneIndex = 255): Promise<CommandResult> {
     // this function does what it says on the tin. Run the command issued to the system.
     // all possible commands are stored in 'queCommands'
-    const command = queApiCommands[commandType](coolTemp, heatTemp);
+    const command = queApiCommands[commandType](coolTemp, heatTemp, zoneIndex);
 
     const preparedRequest = new Request (this.commandUrl, {
       method: 'POST',

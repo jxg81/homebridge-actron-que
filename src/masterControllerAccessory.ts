@@ -17,7 +17,7 @@ export class MasterControllerAccessory {
     // set accessory information
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Actron')
-      .setCharacteristic(this.platform.Characteristic.Model, this.platform.hvacInstance.type)
+      .setCharacteristic(this.platform.Characteristic.Model, this.platform.hvacInstance.type + ' Master Controller')
       .setCharacteristic(this.platform.Characteristic.SerialNumber, this.platform.hvacInstance.serialNo);
 
     // Get or create the heater cooler service.

@@ -3,6 +3,9 @@ import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { MasterControllerAccessory as MasterControllerAccessory } from './masterControllerAccessory';
 import { HvacUnit } from './hvac';
+import { ZoneControllerAccessory } from './zoneControllerAccessory';
+import { DiscoveredDevices } from './types';
+import { HvacZone } from './hvacZone';
 
 export class ActronQuePlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
@@ -71,13 +74,24 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
     // Instantiate an instance of HvacUnit and connect the actronQueApi
     this.hvacInstance = new HvacUnit(this.clientName, this.log, this.zonesFollowMaster);
     const hvacSerial = await this.hvacInstance.actronQueApi(this.username, this.password, this.serialNo);
-    const devices = [
+    await this.hvacInstance.getStatus();
+    const devices: DiscoveredDevices[] = [
       {
+        type: 'masterController',
         uniqueId: hvacSerial,
         displayName: this.clientName,
+        instance: this.hvacInstance,
       },
     ];
-
+    for (const zone of this.hvacInstance.zoneInstances) {
+      devices.push({
+        type: 'zoneController',
+        uniqueId: zone.sensorId,
+        displayName: zone.zoneName,
+        instance: zone,
+      });
+    }
+    this.log.debug('Discovered Devices \n', devices);
     // loop over the discovered devices and register each one if it has not already been registered
     for (const device of devices) {
 
@@ -90,23 +104,23 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
       // the cached devices we stored in the `configureAccessory` method above
       const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
 
-      if (existingAccessory) {
+      if (existingAccessory && device.type === 'masterController') {
         // the accessory already exists
-        this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
-
-        // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
-        // existingAccessory.context.device = device;
-        // this.api.updatePlatformAccessories([existingAccessory]);
+        this.log.info('Restoring Master Controller accessory from cache:', existingAccessory.displayName);
 
         // create the accessory handler for the restored accessory
         // this is imported from `platformAccessory.ts`
         new MasterControllerAccessory(this, existingAccessory);
 
-        // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, eg.:
-        // remove platform accessories when no longer present
-        // this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingAccessory]);
-        // this.log.info('Removing existing accessory from cache:', existingAccessory.displayName);
-      } else {
+      } else if (existingAccessory && device.type === 'zoneController') {
+        // the accessory already exists
+        this.log.info('Restoring Zone Controller accessory from cache:', existingAccessory.displayName);
+
+        // create the accessory handler for the restored accessory
+        // this is imported from `platformAccessory.ts`
+        new ZoneControllerAccessory(this, existingAccessory, device.instance as HvacZone);
+
+      } else if (!existingAccessory && device.type === 'masterController'){
         // the accessory does not yet exist, so we need to create it
         this.log.info('Adding new accessory:', device.displayName);
 
@@ -120,6 +134,24 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
         // create the accessory handler for the newly create accessory
         // this is imported from `platformAccessory.ts`
         new MasterControllerAccessory(this, accessory);
+
+        // link the accessory to your platform
+        this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+
+      } else if (!existingAccessory && device.type === 'zoneController'){
+        // the accessory does not yet exist, so we need to create it
+        this.log.info('Adding new accessory:', device.displayName);
+
+        // create a new accessory
+        const accessory = new this.api.platformAccessory(device.displayName, uuid);
+
+        // store a copy of the device object in the `accessory.context`
+        // the `context` property can be used to store any data about the accessory you may need
+        accessory.context.device = device;
+
+        // create the accessory handler for the newly create accessory
+        // this is imported from `platformAccessory.ts`
+        new ZoneControllerAccessory(this, accessory, device.instance as HvacZone);
 
         // link the accessory to your platform
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
