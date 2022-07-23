@@ -30,7 +30,7 @@
           "required": false,
           "default": true
         },
-        "clinetName": {
+        "clientName": {
           "title": "Client Name",
           "description": "Used to register plugin on Que Cloud as an 'Authorised Device' & default HomeKit name.",
           "type": "string",
