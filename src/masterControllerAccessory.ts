@@ -4,16 +4,13 @@ import { ActronQuePlatform } from './platform';
 
 // This class represents the master controller, a seperate class is used for representing zones (or will be once i write it)
 export class MasterControllerAccessory {
-  private service: Service;
+  private hvacService: Service;
+  private humidityService: Service;
 
   constructor(
     private readonly platform: ActronQuePlatform,
     private readonly accessory: PlatformAccessory,
   ) {
-
-    // attempt to get current status before controlling device.. dont know if this is nessecary.
-    this.platform.hvacInstance.getStatus();
-
     // set accessory information
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Actron')
@@ -21,29 +18,37 @@ export class MasterControllerAccessory {
       .setCharacteristic(this.platform.Characteristic.SerialNumber, this.platform.hvacInstance.serialNo);
 
     // Get or create the heater cooler service.
-    this.service = this.accessory.getService(this.platform.Service.HeaterCooler)
+    this.hvacService = this.accessory.getService(this.platform.Service.HeaterCooler)
     || this.accessory.addService(this.platform.Service.HeaterCooler);
 
+    // Get or create the humidity sensor service.
+    this.humidityService = this.accessory.getService(this.platform.Service.HumiditySensor)
+    || this.accessory.addService(this.platform.Service.HumiditySensor);
+
     // Set accesory display name, this is taken from discover devices in platform
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.displayName);
+    this.hvacService.setCharacteristic(this.platform.Characteristic.Name, accessory.displayName);
+
+    // get humidity
+    this.humidityService.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity)
+      .onGet(this.getHumidity.bind(this));
 
     // register handlers for device control, references the class methods that follow for Set and Get
-    this.service.getCharacteristic(this.platform.Characteristic.Active)
+    this.hvacService.getCharacteristic(this.platform.Characteristic.Active)
       .onSet(this.setPowerState.bind(this))
       .onGet(this.getPowerState.bind(this));
 
-    this.service.getCharacteristic(this.platform.Characteristic.CurrentHeaterCoolerState)
+    this.hvacService.getCharacteristic(this.platform.Characteristic.CurrentHeaterCoolerState)
       .onGet(this.getCurrentCompressorMode.bind(this));
 
-    this.service.getCharacteristic(this.platform.Characteristic.TargetHeaterCoolerState)
+    this.hvacService.getCharacteristic(this.platform.Characteristic.TargetHeaterCoolerState)
       .onGet(this.getTargetClimateMode.bind(this))
       .onSet(this.setTargetClimateMode.bind(this));
 
-    this.service.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
+    this.hvacService.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
       .onGet(this.getCurrentTemperature.bind(this));
 
     // The min/max values here are based on the hardcoded data taken from my unit
-    this.service.getCharacteristic(this.platform.Characteristic.HeatingThresholdTemperature)
+    this.hvacService.getCharacteristic(this.platform.Characteristic.HeatingThresholdTemperature)
       .setProps({
         minValue: 10,
         maxValue: 26,
@@ -53,7 +58,7 @@ export class MasterControllerAccessory {
       .onSet(this.setHeatingThresholdTemperature.bind(this));
 
     // The min/max values here are based on the hardcoded data taken from my unit
-    this.service.getCharacteristic(this.platform.Characteristic.CoolingThresholdTemperature)
+    this.hvacService.getCharacteristic(this.platform.Characteristic.CoolingThresholdTemperature)
       .setProps({
         minValue: 20,
         maxValue: 32,
@@ -66,17 +71,12 @@ export class MasterControllerAccessory {
     // Setting fan mode to 0 seems to automatically trigger a power off (even though i dont request that)
     // having some trouble with range of 0-4, cant seem to set slider to 4, only gets to 3
     // need to revisit this
-    this.service.getCharacteristic(this.platform.Characteristic.RotationSpeed)
-      .setProps({
-        minValue: 0,
-        maxValue: 4,
-        minStep: 1,
-      })
+    this.hvacService.getCharacteristic(this.platform.Characteristic.RotationSpeed)
       .onSet(this.setFanMode.bind(this))
       .onGet(this.getFanMode.bind(this));
 
     // Set the refresh interval for continous device characteristic updates. Hardcoded to 1min here, I should make this a config option
-    setInterval(() => this.updateAllDeviceCharacteristics(), 60000);
+    setInterval(() => this.updateAllDeviceCharacteristics(), this.platform.refreshInterval);
   }
 
   // SET's are async as these need to wait on API response then cache the return value on the hvac Class instance
@@ -84,14 +84,21 @@ export class MasterControllerAccessory {
   // UPDATE is run Async as this polls the API first to confirm current cache state is accurate
   async updateAllDeviceCharacteristics() {
     const currentStatus = await this.platform.hvacInstance.getStatus();
-    this.service.updateCharacteristic(this.platform.Characteristic.Active, this.getPowerState());
-    this.service.updateCharacteristic(this.platform.Characteristic.CurrentHeaterCoolerState, this.getCurrentCompressorMode());
-    this.service.updateCharacteristic(this.platform.Characteristic.TargetHeaterCoolerState, this.getTargetClimateMode());
-    this.service.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.getCurrentTemperature());
-    this.service.updateCharacteristic(this.platform.Characteristic.HeatingThresholdTemperature, this.getHeatingThresholdTemperature());
-    this.service.updateCharacteristic(this.platform.Characteristic.CoolingThresholdTemperature, this.getCoolingThresholdTemperature());
-    this.service.updateCharacteristic(this.platform.Characteristic.RotationSpeed, this.getFanMode());
+    this.hvacService.updateCharacteristic(this.platform.Characteristic.Active, this.getPowerState());
+    this.hvacService.updateCharacteristic(this.platform.Characteristic.CurrentHeaterCoolerState, this.getCurrentCompressorMode());
+    this.hvacService.updateCharacteristic(this.platform.Characteristic.TargetHeaterCoolerState, this.getTargetClimateMode());
+    this.hvacService.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.getCurrentTemperature());
+    this.hvacService.updateCharacteristic(this.platform.Characteristic.HeatingThresholdTemperature, this.getHeatingThresholdTemperature());
+    this.hvacService.updateCharacteristic(this.platform.Characteristic.CoolingThresholdTemperature, this.getCoolingThresholdTemperature());
+    this.hvacService.updateCharacteristic(this.platform.Characteristic.RotationSpeed, this.getFanMode());
+    this.humidityService.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.getHumidity());
     this.platform.log.debug('Refreshed device state from Actron Cloud:\n', JSON.stringify(currentStatus));
+  }
+
+  getHumidity(): CharacteristicValue {
+    const currentHumidity = this.platform.hvacInstance.masterHumidity;
+    this.platform.log.debug('Got Humidity -> ', currentHumidity);
+    return currentHumidity;
   }
 
   async setPowerState(value: CharacteristicValue) {
@@ -137,12 +144,15 @@ export class MasterControllerAccessory {
     switch (value) {
       case this.platform.Characteristic.TargetHeaterCoolerState.AUTO:
         this.platform.hvacInstance.setClimateModeAuto();
+        this.platform.hvacInstance.getStatus();
         break;
       case this.platform.Characteristic.TargetHeaterCoolerState.HEAT:
         this.platform.hvacInstance.setClimateModeHeat();
+        this.platform.hvacInstance.getStatus();
         break;
       case this.platform.Characteristic.TargetHeaterCoolerState.COOL:
         this.platform.hvacInstance.setClimateModeCool();
+        this.platform.hvacInstance.getStatus();
         break;
       default:
         this.platform.log.debug('Failed to set climate mode -> ', value);
@@ -183,6 +193,7 @@ export class MasterControllerAccessory {
       await this.platform.hvacInstance.setControlAllZonesOn();
     }
     this.platform.hvacInstance.setHeatTemp(value as number);
+    this.platform.hvacInstance.getStatus();
     this.platform.log.debug('Set target heating temperature -> ', value);
   }
 
@@ -198,6 +209,7 @@ export class MasterControllerAccessory {
       await this.platform.hvacInstance.setControlAllZonesOn();
     }
     this.platform.hvacInstance.setCoolTemp(value as number);
+    this.platform.hvacInstance.getStatus();
     this.platform.log.debug('Set taget cooling temperature -> ', value);
   }
 
@@ -208,24 +220,21 @@ export class MasterControllerAccessory {
   }
 
   async setFanMode(value: CharacteristicValue) {
-    switch (value) {
-      case 4:
-        this.platform.hvacInstance.setFanModeAuto();
-        break;
-      case 1:
+    switch (true) {
+      case (value <= 30):
         this.platform.hvacInstance.setFanModeLow();
         break;
-      case 2:
+      case (value <= 60):
         this.platform.hvacInstance.setFanModeMedium();
         break;
-      case 3:
+      case (value <= 90):
         this.platform.hvacInstance.setFanModeHigh();
         break;
-      default:
-        this.platform.log.debug('Failed to set fan mode -> ', value);
-        return;
+      case (value <= 100):
+        this.platform.hvacInstance.setFanModeAuto();
+        break;
     }
-    this.platform.log.debug('Set the fan mode 4-Auto, 1-Low, 2-Medium, 3-High -> ', value);
+    this.platform.log.debug('Set the fan mode 91-100:Auto, 1-30:Low, 31-60:Medium, 61-90:High -> ', value);
   }
 
   getFanMode(): CharacteristicValue {
@@ -233,16 +242,16 @@ export class MasterControllerAccessory {
     const fanMode = this.platform.hvacInstance.fanMode;
     switch (fanMode) {
       case FanMode.AUTO || FanMode.AUTO_CONT:
-        currentMode = 4;
+        currentMode = 100;
         break;
       case FanMode.LOW || FanMode.LOW_CONT:
-        currentMode = 1;
+        currentMode = 29;
         break;
       case FanMode.MEDIUM || FanMode.MEDIUM_CONT:
-        currentMode = 2;
+        currentMode = 59;
         break;
       case FanMode.HIGH || FanMode.HIGH_CONT:
-        currentMode = 3;
+        currentMode = 89;
         break;
       default:
         currentMode = 0;

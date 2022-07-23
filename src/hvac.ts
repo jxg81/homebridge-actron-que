@@ -63,9 +63,9 @@ export class HvacUnit {
     for (const zone of this.zoneData) {
       const targetInstance = this.zoneInstances.find(zoneInstance => zoneInstance.sensorId === zone.sensorId);
       if (targetInstance) {
-        targetInstance.updateStatus(zone);
+        targetInstance.pushStatusUpdate(zone);
       } else {
-        this.zoneInstances.push(new HvacZone(this.log, this, zone));
+        this.zoneInstances.push(new HvacZone(this.log, this.apiInterface, zone));
       }
     }
     return currentStatus;
@@ -83,6 +83,7 @@ export class HvacUnit {
         this.powerState=PowerState.ON;
       } else {
         await this.getStatus();
+        this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
       }
     }
     return this.powerState;
@@ -100,6 +101,7 @@ export class HvacUnit {
         this.powerState=PowerState.OFF;
       } else {
         await this.getStatus();
+        this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
       }
     }
     return this.powerState;
@@ -112,6 +114,7 @@ export class HvacUnit {
       this.masterHeatingSetTemp=heatTemp;
     } else {
       await this.getStatus();
+      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
     }
     return this.masterHeatingSetTemp;
   }
@@ -123,6 +126,7 @@ export class HvacUnit {
       this.masterCoolingSetTemp=coolTemp;
     } else {
       await this.getStatus();
+      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
     }
     return this.masterCoolingSetTemp;
   }
@@ -135,6 +139,7 @@ export class HvacUnit {
       this.masterHeatingSetTemp=heatTemp;
     } else {
       await this.getStatus();
+      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
     }
     return [this.masterCoolingSetTemp, this.masterHeatingSetTemp=heatTemp];
   }
@@ -145,6 +150,7 @@ export class HvacUnit {
       this.climateMode=ClimateMode.AUTO;
     } else {
       await this.getStatus();
+      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
     }
     return this.climateMode;
   }
@@ -155,6 +161,7 @@ export class HvacUnit {
       this.climateMode=ClimateMode.COOL;
     } else {
       await this.getStatus();
+      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
     }
     return this.climateMode;
   }
@@ -165,6 +172,7 @@ export class HvacUnit {
       this.climateMode=ClimateMode.HEAT;
     } else {
       await this.getStatus();
+      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
     }
     return this.climateMode;
   }
@@ -175,6 +183,7 @@ export class HvacUnit {
       this.climateMode=ClimateMode.FAN;
     } else {
       await this.getStatus();
+      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
     }
     return this.climateMode;
   }
@@ -185,6 +194,7 @@ export class HvacUnit {
       this.fanMode=FanMode.AUTO;
     } else {
       await this.getStatus();
+      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
     }
     return this.fanMode;
   }
@@ -195,6 +205,7 @@ export class HvacUnit {
       this.fanMode=FanMode.LOW;
     } else {
       await this.getStatus();
+      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
     }
     return this.fanMode;
   }
@@ -205,6 +216,7 @@ export class HvacUnit {
       this.fanMode=FanMode.MEDIUM;
     } else {
       await this.getStatus();
+      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
     }
     return this.fanMode;
   }
@@ -215,6 +227,7 @@ export class HvacUnit {
       this.fanMode=FanMode.HIGH;
     } else {
       await this.getStatus();
+      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
     }
     return this.fanMode;
   }
@@ -225,6 +238,7 @@ export class HvacUnit {
       this.awayMode=true;
     } else {
       await this.getStatus();
+      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
     }
     return this.awayMode;
   }
@@ -235,6 +249,7 @@ export class HvacUnit {
       this.awayMode=false;
     } else {
       await this.getStatus();
+      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
     }
     return this.awayMode;
   }
@@ -245,6 +260,7 @@ export class HvacUnit {
       this.quietMode=true;
     } else {
       await this.getStatus();
+      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
     }
     return this.quietMode;
   }
@@ -255,6 +271,7 @@ export class HvacUnit {
       this.quietMode=false;
     } else {
       await this.getStatus();
+      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
     }
     return this.quietMode;
   }
@@ -265,6 +282,7 @@ export class HvacUnit {
       this.controlAllZones=true;
     } else {
       await this.getStatus();
+      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
     }
     return this.controlAllZones;
   }
@@ -275,6 +293,7 @@ export class HvacUnit {
       this.controlAllZones=false;
     } else {
       await this.getStatus();
+      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
     }
     return this.controlAllZones;
   }

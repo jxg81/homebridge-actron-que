@@ -1,11 +1,12 @@
 import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
-import { MasterControllerAccessory as MasterControllerAccessory } from './masterControllerAccessory';
-import { HvacUnit } from './hvac';
+import { MasterControllerAccessory } from './masterControllerAccessory';
 import { ZoneControllerAccessory } from './zoneControllerAccessory';
-import { DiscoveredDevices } from './types';
+import { OutdoorUnitAccessory } from './outdoorUnitAccessory';
+import { HvacUnit } from './hvac';
 import { HvacZone } from './hvacZone';
+import { DiscoveredDevices } from './types';
 
 export class ActronQuePlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
@@ -13,11 +14,12 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
   public readonly accessories: PlatformAccessory[] = [];
 
   // Attributes required for intialisation of ActronQue platform
-  private readonly clientName: string = '';
-  private readonly username: string = '';
-  private readonly password: string = '';
-  private readonly serialNo: string = '';
-  private readonly zonesFollowMaster: boolean = true;
+  private readonly clientName: string;
+  private readonly username: string;
+  private readonly password: string;
+  readonly userProvidedSerialNo: string = '';
+  readonly zonesFollowMaster: boolean = true;
+  readonly refreshInterval: number = 60000;
   hvacInstance!: HvacUnit;
 
   constructor(
@@ -29,10 +31,10 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
     this.username = config['username'];
     this.password = config['password'];
     if (config['deviceSerial']) {
-      this.serialNo = config['deviceSerial'];
-      this.log.debug('Serial number should only be specified if you have multiple systems in your Que account', this.serialNo);
+      this.userProvidedSerialNo = config['deviceSerial'];
+      this.log.debug('Serial number should only be specified if you have multiple systems in your Que account', this.userProvidedSerialNo);
     } else {
-      this.serialNo = '';
+      this.userProvidedSerialNo = '';
     }
     if (config['zonesFollowMaster']) {
       this.zonesFollowMaster = config['zonesFollowMaster'];
@@ -40,12 +42,34 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
     } else {
       this.zonesFollowMaster = true;
     }
+    if (config['refreshInterval']) {
+      this.refreshInterval = config['refreshInterval'] * 1000;
+      this.log.debug('Auto refresh interval set to seconds', this.refreshInterval/1000);
+    } else {
+      this.refreshInterval = 60000;
+    }
+
+    // Check Required Config Fields
+    if (!this.username) {
+      this.log.error('Username is not configured - aborting plugin start. ' +
+        'Please set the field `username` in your config and restart Homebridge.');
+      return;
+    }
+
+    if (!this.password) {
+      this.log.error('Password is not configured - aborting plugin start. ' +
+        'Please set the field `password` in your config and restart Homebridge.');
+      return;
+    }
+
+    if (!this.clientName) {
+      this.log.error('Client Name is not configured - aborting plugin start. ' +
+        'Please set the field `clientName` in your config and restart Homebridge.');
+      return;
+    }
+
     this.log.debug('Finished initializing platform:', this.config.name);
 
-    // When this event is fired it means Homebridge has restored all cached accessories from disk.
-    // Dynamic Platform plugins should only register new accessories after this event was fired,
-    // in order to ensure they weren't added to homebridge already. This event can also be used
-    // to start discovery of new accessories.
     this.api.on('didFinishLaunching', () => {
       log.debug('Executed didFinishLaunching callback');
       // run the method to discover / register your devices as accessories
@@ -53,33 +77,28 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
     });
   }
 
-  /**
-   * This function is invoked when homebridge restores cached accessories from disk at startup.
-   * It should be used to setup event handlers for characteristics and update respective values.
-   */
   configureAccessory(accessory: PlatformAccessory) {
     this.log.info('Loading accessory from cache:', accessory.displayName);
-
-    // add the restored accessory to the accessories cache so we can track if it has already been registered
     this.accessories.push(accessory);
   }
 
-  /**
-   * This is an example method showing how to register discovered accessories.
-   * Accessories must only be registered once, previously created accessories
-   * must not be registered again to prevent "duplicate UUID" errors.
-   */
   async discoverDevices() {
-
     // Instantiate an instance of HvacUnit and connect the actronQueApi
     this.hvacInstance = new HvacUnit(this.clientName, this.log, this.zonesFollowMaster);
-    const hvacSerial = await this.hvacInstance.actronQueApi(this.username, this.password, this.serialNo);
+    const hvacSerial = await this.hvacInstance.actronQueApi(this.username, this.password, this.userProvidedSerialNo);
+    // Make sure we have havc master and zone data before adding devices
     await this.hvacInstance.getStatus();
     const devices: DiscoveredDevices[] = [
       {
         type: 'masterController',
         uniqueId: hvacSerial,
         displayName: this.clientName,
+        instance: this.hvacInstance,
+      },
+      {
+        type: 'outdoorUnit',
+        uniqueId: hvacSerial + '-outdoorUnit',
+        displayName: this.clientName + '-outdoorUnit',
         instance: this.hvacInstance,
       },
     ];
@@ -94,66 +113,43 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
     this.log.debug('Discovered Devices \n', devices);
     // loop over the discovered devices and register each one if it has not already been registered
     for (const device of devices) {
-
-      // generate a unique id for the accessory this should be generated from
-      // something globally unique, but constant, for example, the device serial
-      // number or MAC address
-      const uuid = this.api.hap.uuid.generate(device.uniqueId);
-
-      // see if an accessory with the same uuid has already been registered and restored from
+      // create uuid first then see if an accessory with the same uuid has already been registered and restored from
       // the cached devices we stored in the `configureAccessory` method above
+      const uuid = this.api.hap.uuid.generate(device.uniqueId);
       const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
 
+      // Create and/or restore cached accessories
       if (existingAccessory && device.type === 'masterController') {
-        // the accessory already exists
         this.log.info('Restoring Master Controller accessory from cache:', existingAccessory.displayName);
-
-        // create the accessory handler for the restored accessory
-        // this is imported from `platformAccessory.ts`
         new MasterControllerAccessory(this, existingAccessory);
 
       } else if (existingAccessory && device.type === 'zoneController') {
-        // the accessory already exists
         this.log.info('Restoring Zone Controller accessory from cache:', existingAccessory.displayName);
-
-        // create the accessory handler for the restored accessory
-        // this is imported from `platformAccessory.ts`
         new ZoneControllerAccessory(this, existingAccessory, device.instance as HvacZone);
 
+      } else if (existingAccessory && device.type === 'outdoorUnit') {
+        this.log.info('Restoring Outdoor Unit accessory from cache:', existingAccessory.displayName);
+        new OutdoorUnitAccessory(this, existingAccessory);
+
       } else if (!existingAccessory && device.type === 'masterController'){
-        // the accessory does not yet exist, so we need to create it
         this.log.info('Adding new accessory:', device.displayName);
-
-        // create a new accessory
         const accessory = new this.api.platformAccessory(device.displayName, uuid);
-
-        // store a copy of the device object in the `accessory.context`
-        // the `context` property can be used to store any data about the accessory you may need
         accessory.context.device = device;
-
-        // create the accessory handler for the newly create accessory
-        // this is imported from `platformAccessory.ts`
         new MasterControllerAccessory(this, accessory);
-
-        // link the accessory to your platform
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
 
       } else if (!existingAccessory && device.type === 'zoneController'){
-        // the accessory does not yet exist, so we need to create it
         this.log.info('Adding new accessory:', device.displayName);
-
-        // create a new accessory
         const accessory = new this.api.platformAccessory(device.displayName, uuid);
-
-        // store a copy of the device object in the `accessory.context`
-        // the `context` property can be used to store any data about the accessory you may need
         accessory.context.device = device;
-
-        // create the accessory handler for the newly create accessory
-        // this is imported from `platformAccessory.ts`
         new ZoneControllerAccessory(this, accessory, device.instance as HvacZone);
+        this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
 
-        // link the accessory to your platform
+      } else if (!existingAccessory && device.type === 'outdoorUnit'){
+        this.log.info('Adding new accessory:', device.displayName);
+        const accessory = new this.api.platformAccessory(device.displayName, uuid);
+        accessory.context.device = device;
+        new OutdoorUnitAccessory(this, accessory);
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
       }
     }

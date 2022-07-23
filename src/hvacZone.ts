@@ -1,13 +1,11 @@
 import { validApiCommands, ZoneStatus, CommandResult } from './types';
 import QueApi from './queApi';
 import { Logger } from 'homebridge';
-import { HvacUnit } from './hvac';
 
 export class HvacZone {
   readonly zoneName: string;
   readonly zoneIndex: number;
   readonly sensorId: string;
-  readonly apiInterface: QueApi;
   zoneEnabled: boolean;
   currentTemp: number;
   currentHeatingSetTemp: number;
@@ -21,7 +19,7 @@ export class HvacZone {
 
   constructor(
         private readonly log: Logger,
-        readonly masterController: HvacUnit,
+        readonly apiInterface: QueApi,
         zoneStatus: ZoneStatus,
   ) {
 
@@ -38,10 +36,9 @@ export class HvacZone {
     this.currentHeatingSetTemp = zoneStatus.currentHeatingSetTemp;
     this.currentCoolingSetTemp = zoneStatus.currentCoolingSetTemp;
     this.zoneSensorBattery = zoneStatus.zoneSensorBattery;
-    this.apiInterface = this.masterController.apiInterface;
   }
 
-  async updateStatus(zoneStatus: ZoneStatus) {
+  async pushStatusUpdate(zoneStatus: ZoneStatus) {
     this.zoneEnabled = zoneStatus.zoneEnabled;
     this.currentTemp = zoneStatus.currentTemp;
     this.currentHumidity = zoneStatus.currentHumidity;
@@ -54,6 +51,12 @@ export class HvacZone {
     this.zoneSensorBattery = zoneStatus.zoneSensorBattery;
   }
 
+  async getZoneStatus() {
+    const refreshState = await this.apiInterface.getStatus();
+    const targetInstance = refreshState.zoneCurrentStatus.find(zoneInstance => zoneInstance.sensorId === this.sensorId) as ZoneStatus;
+    return targetInstance;
+  }
+
   async setZoneEnable(): Promise<boolean> {
     const coolTemp = 0;
     const heatTemp = 0;
@@ -61,7 +64,9 @@ export class HvacZone {
     if (response === CommandResult.SUCCESS) {
       this.zoneEnabled=true;
     } else {
-      await this.apiInterface.getStatus();
+      const zoneState = await this.getZoneStatus();
+      this.zoneEnabled = zoneState.zoneEnabled;
+      this.log.debug(`Failed to set zone ${this.zoneIndex}, ${this.zoneName}, refreshing zone state from API`);
     }
     return this.zoneEnabled;
   }
@@ -73,29 +78,45 @@ export class HvacZone {
     if (response === CommandResult.SUCCESS) {
       this.zoneEnabled=false;
     } else {
-      await this.apiInterface.getStatus();
+      const zoneState = await this.getZoneStatus();
+      this.zoneEnabled = zoneState.zoneEnabled;
+      this.log.debug(`Failed to set zone ${this.zoneIndex}, ${this.zoneName}, refreshing zone state from API`);
     }
     return this.zoneEnabled;
   }
 
   async setHeatTemp(heatTemp: number): Promise<number> {
     const coolTemp = 0;
+    if (heatTemp > this.maxHeatSetPoint) {
+      heatTemp = this.maxHeatSetPoint;
+    } else if (heatTemp < this.minHeatSetPoint) {
+      heatTemp = this.minHeatSetPoint;
+    }
     const response = await this.apiInterface.runCommand(validApiCommands.ZONE_HEAT_SET_POINT, coolTemp, heatTemp, this.zoneIndex);
     if (response === CommandResult.SUCCESS) {
       this.currentHeatingSetTemp=heatTemp;
     } else {
-      await this.apiInterface.getStatus();
+      const zoneState = await this.getZoneStatus();
+      this.zoneEnabled = zoneState.zoneEnabled;
+      this.log.debug(`Failed to set zone ${this.zoneIndex}, ${this.zoneName}, refreshing zone state from API`);
     }
     return this.currentHeatingSetTemp;
   }
 
   async setCoolTemp(coolTemp: number): Promise<number> {
     const heatTemp = 0;
+    if (coolTemp > this.maxCoolSetPoint) {
+      coolTemp = this.maxCoolSetPoint;
+    } else if (coolTemp < this.minCoolSetPoint) {
+      coolTemp = this.minCoolSetPoint;
+    }
     const response = await this.apiInterface.runCommand(validApiCommands.ZONE_COOL_SET_POINT, coolTemp, heatTemp, this.zoneIndex);
     if (response === CommandResult.SUCCESS) {
       this.currentCoolingSetTemp=heatTemp;
     } else {
-      await this.apiInterface.getStatus();
+      const zoneState = await this.getZoneStatus();
+      this.zoneEnabled = zoneState.zoneEnabled;
+      this.log.debug(`Failed to set zone ${this.zoneIndex}, ${this.zoneName}, refreshing zone state from API`);
     }
     return this.currentCoolingSetTemp;
   }

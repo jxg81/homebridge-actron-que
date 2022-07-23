@@ -8,9 +8,10 @@ import { queApiCommands } from './queCommands';
 export default class QueApi {
 
   private readonly basePath: string = 'https://que.actronair.com.au';
-  private readonly refreshTokenFile: string = './access.token';
-  private readonly bearerTokenFile: string = './bearer.token';
-  private readonly apiClientIdFile: string = './clientid.token';
+  private readonly persistentDataDir: string = './homebridge-actron-que-persist';
+  private readonly refreshTokenFile: string = './homebridge-actron-que-persist/access.token';
+  private readonly bearerTokenFile: string = './homebridge-actron-que-persist/bearer.token';
+  private readonly apiClientIdFile: string = './homebridge-actron-que-persist/clientid.token';
   private apiClientId: string;
   private commandUrl!: string;
   private queryUrl!: string;
@@ -31,6 +32,9 @@ export default class QueApi {
 
     // check for existing client ID for given client name. If client name file does not exist then create one.
     // If client is new name then create a new unique ID.
+    if (!fs.existsSync(this.persistentDataDir)) {
+      fs.mkdirSync(this.persistentDataDir);
+    }
     if (!fs.existsSync(this.apiClientIdFile)) {
       this.apiClientId = this.generateClientId();
       fs.writeFileSync(this.apiClientIdFile, `[{"name": "${this.apiClinetName}", "id": "${this.apiClientId}"}]`);

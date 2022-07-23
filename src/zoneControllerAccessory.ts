@@ -5,17 +5,15 @@ import { HvacZone } from './hvacZone';
 
 // This class represents the master controller, a seperate class is used for representing zones (or will be once i write it)
 export class ZoneControllerAccessory {
-  private service: Service;
-
+  private hvacService: Service;
+  private humidityService: Service;
+  private batteryService: Service;
 
   constructor(
     private readonly platform: ActronQuePlatform,
     private readonly accessory: PlatformAccessory,
     private readonly zone: HvacZone,
   ) {
-
-    // attempt to get current status before controlling device.. dont know if this is nessecary.
-    this.platform.hvacInstance.getStatus();
 
     // set accessory information
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
@@ -24,29 +22,48 @@ export class ZoneControllerAccessory {
       .setCharacteristic(this.platform.Characteristic.SerialNumber, this.zone.sensorId);
 
     // Get or create the heater cooler service.
-    this.service = this.accessory.getService(this.platform.Service.HeaterCooler)
+    this.hvacService = this.accessory.getService(this.platform.Service.HeaterCooler)
     || this.accessory.addService(this.platform.Service.HeaterCooler);
 
+    // Get or create the humidity sensor service.
+    this.humidityService = this.accessory.getService(this.platform.Service.HumiditySensor)
+    || this.accessory.addService(this.platform.Service.HumiditySensor);
+
+    // Get or create the humidity sensor service.
+    this.batteryService = this.accessory.getService(this.platform.Service.Battery)
+    || this.accessory.addService(this.platform.Service.Battery);
+
     // Set accesory display name, this is taken from discover devices in platform
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.displayName);
+    this.hvacService.setCharacteristic(this.platform.Characteristic.Name, accessory.displayName);
+
+    // get humidity
+    this.humidityService.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity)
+      .onGet(this.getHumidity.bind(this));
+
+    // get battery low
+    this.batteryService.getCharacteristic(this.platform.Characteristic.StatusLowBattery)
+      .onGet(this.getBatteryStatus.bind(this));
+
+    this.batteryService.getCharacteristic(this.platform.Characteristic.BatteryLevel)
+      .onGet(this.getBatteryLevel.bind(this));
 
     // register handlers for device control, references the class methods that follow for Set and Get
-    this.service.getCharacteristic(this.platform.Characteristic.Active)
+    this.hvacService.getCharacteristic(this.platform.Characteristic.Active)
       .onSet(this.setEnableState.bind(this))
       .onGet(this.getEnableState.bind(this));
 
-    this.service.getCharacteristic(this.platform.Characteristic.CurrentHeaterCoolerState)
+    this.hvacService.getCharacteristic(this.platform.Characteristic.CurrentHeaterCoolerState)
       .onGet(this.getCurrentCompressorMode.bind(this));
 
-    this.service.getCharacteristic(this.platform.Characteristic.TargetHeaterCoolerState)
+    this.hvacService.getCharacteristic(this.platform.Characteristic.TargetHeaterCoolerState)
       .onGet(this.getTargetClimateMode.bind(this))
       .onSet(this.setTargetClimateMode.bind(this));
 
-    this.service.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
+    this.hvacService.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
       .onGet(this.getCurrentTemperature.bind(this));
 
     // The min/max values here are based on the hardcoded data taken from my unit
-    this.service.getCharacteristic(this.platform.Characteristic.HeatingThresholdTemperature)
+    this.hvacService.getCharacteristic(this.platform.Characteristic.HeatingThresholdTemperature)
       .setProps({
         minValue: 10,
         maxValue: 26,
@@ -56,7 +73,7 @@ export class ZoneControllerAccessory {
       .onSet(this.setHeatingThresholdTemperature.bind(this));
 
     // The min/max values here are based on the hardcoded data taken from my unit
-    this.service.getCharacteristic(this.platform.Characteristic.CoolingThresholdTemperature)
+    this.hvacService.getCharacteristic(this.platform.Characteristic.CoolingThresholdTemperature)
       .setProps({
         minValue: 20,
         maxValue: 32,
@@ -65,6 +82,42 @@ export class ZoneControllerAccessory {
       .onGet(this.getCoolingThresholdTemperature.bind(this))
       .onSet(this.setCoolingThresholdTemperature.bind(this));
 
+    setInterval(() => this.updateAllDeviceCharacteristics(), this.platform.refreshInterval);
+
+  }
+
+  // SET's are async as these need to wait on API response then cache the return value on the hvac Class instance
+  // GET's run non async as this is a quick retrival from the hvac class insatnce cache
+  // UPDATE is run Async as this polls the API first to confirm current cache state is accurate
+  async updateAllDeviceCharacteristics() {
+    this.hvacService.updateCharacteristic(this.platform.Characteristic.Active, this.getEnableState());
+    this.hvacService.updateCharacteristic(this.platform.Characteristic.CurrentHeaterCoolerState, this.getCurrentCompressorMode());
+    this.hvacService.updateCharacteristic(this.platform.Characteristic.TargetHeaterCoolerState, this.getTargetClimateMode());
+    this.hvacService.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.getCurrentTemperature());
+    this.hvacService.updateCharacteristic(this.platform.Characteristic.HeatingThresholdTemperature, this.getHeatingThresholdTemperature());
+    this.hvacService.updateCharacteristic(this.platform.Characteristic.CoolingThresholdTemperature, this.getCoolingThresholdTemperature());
+    this.humidityService.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.getHumidity());
+    this.batteryService.updateCharacteristic(this.platform.Characteristic.StatusLowBattery, this.getBatteryStatus());
+    this.batteryService.updateCharacteristic(this.platform.Characteristic.BatteryLevel, this.getBatteryLevel());
+  }
+
+  getHumidity(): CharacteristicValue {
+    const currentHumidity = this.zone.currentHumidity;
+    this.platform.log.debug('Got Humidity -> ', currentHumidity);
+    return currentHumidity;
+  }
+
+  getBatteryStatus(): CharacteristicValue {
+    const currentBattery = this.zone.zoneSensorBattery;
+    const batteryState = (currentBattery < 10) ? 1 : 0;
+    this.platform.log.debug('Got Battery Status -> ', batteryState);
+    return batteryState;
+  }
+
+  getBatteryLevel(): CharacteristicValue {
+    const currentBattery = this.zone.zoneSensorBattery;
+    this.platform.log.debug('Got Battery Level -> ', currentBattery);
+    return currentBattery;
   }
 
   async setEnableState(value: CharacteristicValue) {

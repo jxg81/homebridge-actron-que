@@ -138,3 +138,6 @@ web_modules/
 
 # API response Samples
 api_samples
+
+# DS Stroe
+.DS_Store
