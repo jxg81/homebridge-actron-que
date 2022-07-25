@@ -155,7 +155,10 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
           this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
         }
       }
-    } catch {
+    } catch (error) {
+      if (error instanceof Error) {
+        this.log.error(error.message);
+      }
       this.log.error('Plugin disabled, please review error log and check your config file then restart Homebridge');
     }
   }
