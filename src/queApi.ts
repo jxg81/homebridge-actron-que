@@ -81,29 +81,26 @@ export default class QueApi {
         return response.json();
       // If the bearer token has expired then generate new token, update request and retry
       // error will be generated after max retries is reached, default of 3
+      // added logic to clear out cached tokens in recurring error states to better handle cases
+      // where the API access for the client has been revoked on the Que portal
       case(401):
         if (retries > 1) {
           await wait();
           await this.tokenGenerator();
           requestContent.headers.set('Authorization', `Bearer ${this.bearerToken.token}`);
           return this.manageApiRequest(requestContent, retries -1);
-        } else if (retries > 0) {
-          // after two failed attempts, completely clear the token files from persistent storage
-          // create new and try again with a new refresh and bearer token and try one more time
-          this.log.debug('clearing all token data and trying one more time following multiple 401 errors');
+        } else {
           fs.writeFileSync(this.refreshTokenFile, '{"expires": 0, "token": ""}');
           fs.writeFileSync(this.bearerTokenFile, '{"expires": 0, "token": ""}');
-          this.refreshToken = JSON.parse(fs.readFileSync(this.refreshTokenFile).toString());
-          this.bearerToken = JSON.parse(fs.readFileSync(this.bearerTokenFile).toString());
-          await this.tokenGenerator();
-          requestContent.headers.set('Authorization', `Bearer ${this.bearerToken.token}`);
-          return this.manageApiRequest(requestContent, retries -1);
-        } else {
-          throw Error(`Maximum retires excced on failed Authorisation: http status code = ${response.status}`);
+          throw Error(`Maximum retires excced on failed Authorisation: http status code = ${response.status}\n
+          If you recently revoked access for clients on the Que portal, a restart should resolve the issue`);
         }
 
       case(400):
-        throw Error(`Looks like you have a username or password issue, check your config file: http status code = ${response.status}`);
+        fs.writeFileSync(this.refreshTokenFile, '{"expires": 0, "token": ""}');
+        fs.writeFileSync(this.bearerTokenFile, '{"expires": 0, "token": ""}');
+        throw Error(`Looks like you have a username or password issue, check your config file: http status code = ${response.status}\n
+        If you recently revoked access for clients on the Que portal, a restart should resolve the issue`);
 
       // observed occasional gateway timeouts when querying the API. This allows for a couple of retrys before failing
       case(504):
@@ -111,11 +108,17 @@ export default class QueApi {
           await wait();
           return this.manageApiRequest(requestContent, retries -1);
         } else {
-          throw Error(`Maximum retires excced on gateway timeout: http status code = ${response.status}`);
+          fs.writeFileSync(this.refreshTokenFile, '{"expires": 0, "token": ""}');
+          fs.writeFileSync(this.bearerTokenFile, '{"expires": 0, "token": ""}');
+          throw Error(`Maximum retires excced on gateway timeout: http status code = ${response.status}\n
+          If you recently revoked access for clients on the Que portal, a restart should resolve the issue`);
         }
 
       default:
-        throw Error(`An unhandled error has occured: http status code = ${response.status}`);
+        fs.writeFileSync(this.refreshTokenFile, '{"expires": 0, "token": ""}');
+        fs.writeFileSync(this.bearerTokenFile, '{"expires": 0, "token": ""}');
+        throw Error(`An unhandled error has occured: http status code = ${response.status}\n
+        If you recently revoked access for clients on the Que portal, a restart may resolve the issue`);
     }
   }
 
