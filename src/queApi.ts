@@ -79,14 +79,24 @@ export default class QueApi {
 
       case (200):
         return response.json();
-
       // If the bearer token has expired then generate new token, update request and retry
-      // error will be generated after max retries is reached, default of 2
+      // error will be generated after max retries is reached, default of 3
       case(401):
-        await this.tokenGenerator();
-        requestContent.headers.set('Authorization', `Bearer ${this.bearerToken.token}`);
-        if (retries > 0) {
+        if (retries > 1) {
           await wait();
+          await this.tokenGenerator();
+          requestContent.headers.set('Authorization', `Bearer ${this.bearerToken.token}`);
+          return this.manageApiRequest(requestContent, retries -1);
+        } else if (retries > 0) {
+          // after two failed attempts, completely clear the token files from persistent storage
+          // create new and try again with a new refresh and bearer token and try one more time
+          this.log.debug('clearing all token data and trying one more time following multiple 401 errors');
+          fs.writeFileSync(this.refreshTokenFile, '{"expires": 0, "token": ""}');
+          fs.writeFileSync(this.bearerTokenFile, '{"expires": 0, "token": ""}');
+          this.refreshToken = JSON.parse(fs.readFileSync(this.refreshTokenFile).toString());
+          this.bearerToken = JSON.parse(fs.readFileSync(this.bearerTokenFile).toString());
+          await this.tokenGenerator();
+          requestContent.headers.set('Authorization', `Bearer ${this.bearerToken.token}`);
           return this.manageApiRequest(requestContent, retries -1);
         } else {
           throw Error(`Maximum retires excced on failed Authorisation: http status code = ${response.status}`);
@@ -140,7 +150,7 @@ export default class QueApi {
       }),
     });
     // this is wrapped in a try/catch to help identify potential user/pass related errors
-    let response;
+    let response: object = {};
     try {
       response = await this.manageApiRequest(preparedRequest);
     } catch (error) {

@@ -35,7 +35,11 @@ export class HvacUnit {
     this.type = 'actronQue';
     this.apiInterface = new QueApi(username, password, this.name, this.log, serialNo);
     await this.apiInterface.initalizer();
-    this.serialNo = this.apiInterface.actronSerial;
+    if (this.apiInterface.actronSerial) {
+      this.serialNo = this.apiInterface.actronSerial;
+    } else {
+      throw Error('Failed to locate device serial number. Please check your config file');
+    }
     return this.serialNo;
   }
 
