@@ -92,7 +92,7 @@ export class MasterControllerAccessory {
     this.hvacService.updateCharacteristic(this.platform.Characteristic.CoolingThresholdTemperature, this.getCoolingThresholdTemperature());
     this.hvacService.updateCharacteristic(this.platform.Characteristic.RotationSpeed, this.getFanMode());
     this.humidityService.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.getHumidity());
-    this.platform.log.debug('Refreshed device state from Actron Cloud:\n', JSON.stringify(currentStatus));
+    this.platform.log.debug('Refreshed device state from hvac instance:\n', JSON.stringify(currentStatus));
   }
 
   getHumidity(): CharacteristicValue {

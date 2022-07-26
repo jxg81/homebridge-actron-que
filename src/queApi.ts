@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import fetch, { Request } from 'node-fetch';
+import fetch, { Request, Response, FetchError } from 'node-fetch';
 import { apiToken, tokenCollection, PowerState, validApiCommands, ZoneStatus, HvacStatus, CommandResult } from './types';
 import { Logger } from 'homebridge';
 import { queApiCommands } from './queCommands';
@@ -74,7 +74,30 @@ export default class QueApi {
       });
     };
 
-    const response = await fetch(requestContent);
+    let response: Response;
+    try {
+      response = await fetch(requestContent);
+    // This error block will allow for around one day of retries if there is a network related failing.
+    // this doesnt work well if things are already running and net drops, as new requests keep queuing
+    // need a blocking method or enable value return that can be managed downstream while logging error
+    } catch (error) {
+      const fError = error as FetchError;
+      if (retries > 0 &&
+         (fError.code === 'EHOSTDOWN' ||
+          fError.code === 'EHOSTUNREACH' ||
+          fError.code === 'ETIMEDOUT' ||
+          fError.code === 'ENETUNREACH' ||
+          fError.code === 'ENOTFOUND')) {
+        retries -0.01;
+        this.log.info(`Network connection issue, retrying in five minutes, attempt no. ${Math.round((3-retries) * 100)}:`, fError.message);
+        await wait(300);
+        response = await this.manageApiRequest(requestContent, retries);
+      } else {
+        this.log.error(`Error attempting API fetch, unable to reach API for ${(3-retries)*5}minutes`);
+        throw Error(`Unexpected error during API request: \n ${fError.message}`);
+      }
+    }
+
     switch (response.status) {
 
       case (200):
