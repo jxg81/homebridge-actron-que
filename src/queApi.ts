@@ -267,7 +267,7 @@ export default class QueApi {
       method: 'GET',
       headers: {'Authorization': `Bearer ${this.bearerToken.token}`},
     });
-    // Killing 
+    // Killing intialisation and throwing errors if we cant get the AC serial number
     let response: object = {};
     try {
       response = await this.manageApiRequest(preparedRequest);
