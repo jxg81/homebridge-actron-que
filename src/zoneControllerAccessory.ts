@@ -103,20 +103,20 @@ export class ZoneControllerAccessory {
 
   getHumidity(): CharacteristicValue {
     const currentHumidity = this.zone.currentHumidity;
-    this.platform.log.debug('Got Humidity -> ', currentHumidity);
+    this.platform.log.debug(`Got Zone ${this.zone.zoneName} Humidity -> `, currentHumidity);
     return currentHumidity;
   }
 
   getBatteryStatus(): CharacteristicValue {
     const currentBattery = this.zone.zoneSensorBattery;
     const batteryState = (currentBattery < 10) ? 1 : 0;
-    this.platform.log.debug('Got Battery Status -> ', batteryState);
+    this.platform.log.debug(`Got Zone ${this.zone.zoneName} Battery Status -> `, batteryState);
     return batteryState;
   }
 
   getBatteryLevel(): CharacteristicValue {
     const currentBattery = this.zone.zoneSensorBattery;
-    this.platform.log.debug('Got Battery Level -> ', currentBattery);
+    this.platform.log.debug(`Got Zone ${this.zone.zoneName} Battery Level -> `, currentBattery);
     return currentBattery;
   }
 
@@ -129,12 +129,12 @@ export class ZoneControllerAccessory {
         this.zone.setZoneEnable();
         break;
     }
-    this.platform.log.debug('Set Zone Enable State -> ', value);
+    this.platform.log.debug(`Set Zone ${this.zone.zoneName} Enable State -> `, value);
   }
 
   getEnableState(): CharacteristicValue {
     const enableState = (this.zone.zoneEnabled === true) ? 1 : 0;
-    this.platform.log.debug('Got Zone Enable State -> ', enableState);
+    this.platform.log.debug(`Got Zone ${this.zone.zoneName} Enable State -> `, enableState);
     return enableState;
   }
 
@@ -153,9 +153,9 @@ export class ZoneControllerAccessory {
         break;
       default:
         currentMode = 0;
-        this.platform.log.debug('Failed to get a valid compressor mode -> ', compressorMode);
+        this.platform.log.debug('Failed To Get a Valid Compressor Mode -> ', compressorMode);
     }
-    this.platform.log.debug('Got current compressor mode -> ', compressorMode);
+    this.platform.log.debug(`Got Zone ${this.zone.zoneName} current compressor mode -> `, compressorMode);
     return currentMode;
   }
 
@@ -170,10 +170,8 @@ export class ZoneControllerAccessory {
       case this.platform.Characteristic.TargetHeaterCoolerState.COOL:
         this.platform.hvacInstance.setClimateModeCool();
         break;
-      default:
-        this.platform.log.debug('Failed to set climate mode -> ', value);
     }
-    this.platform.log.debug('Set climate mode -> ', value);
+    this.platform.log.debug(`Set Zone ${this.zone.zoneName} Climate Mode -> `, value);
   }
 
   getTargetClimateMode(): CharacteristicValue {
@@ -191,37 +189,37 @@ export class ZoneControllerAccessory {
         break;
       default:
         currentMode = 0;
-        this.platform.log.debug('Failed to get target climate mode -> ', climateMode);
+        this.platform.log.debug('Failed To Get Target Climate Mode -> ', climateMode);
     }
-    this.platform.log.debug('Got target climate mode -> ', climateMode);
+    this.platform.log.debug(`Got Zone ${this.zone.zoneName} Target Climate Mode -> `, climateMode);
     return currentMode;
   }
 
   getCurrentTemperature(): CharacteristicValue {
     const currentTemp = this.zone.currentTemp;
-    this.platform.log.debug('Got current zone temperature -> ', currentTemp);
+    this.platform.log.debug(`Got Zone ${this.zone.zoneName} Current Temperature -> `, currentTemp);
     return currentTemp;
   }
 
   async setHeatingThresholdTemperature(value: CharacteristicValue) {
     this.zone.setHeatTemp(value as number);
-    this.platform.log.debug('Set zone target heating temperature -> ', value);
+    this.platform.log.debug(`Set Zone ${this.zone.zoneName} Target Heating Temperature -> `, value);
   }
 
   getHeatingThresholdTemperature(): CharacteristicValue {
     const targetTemp = this.zone.currentHeatingSetTemp;
-    this.platform.log.debug('Got zone target heating temerature -> ', targetTemp);
+    this.platform.log.debug(`Got Zone ${this.zone.zoneName} Target Heating Temperature -> `, targetTemp);
     return targetTemp;
   }
 
   async setCoolingThresholdTemperature(value: CharacteristicValue) {
     this.zone.setCoolTemp(value as number);
-    this.platform.log.debug('Set zone taget cooling temperature -> ', value);
+    this.platform.log.debug(`Set Zone ${this.zone.zoneName} Taget Cooling Temperature -> `, value);
   }
 
   getCoolingThresholdTemperature(): CharacteristicValue {
     const targetTemp = this.zone.currentCoolingSetTemp;
-    this.platform.log.debug('Got zone target cooling temperature -> ', targetTemp);
+    this.platform.log.debug(`Got Zone ${this.zone.zoneName} Target Cooling Temperature -> `, targetTemp);
     return targetTemp;
   }
 }

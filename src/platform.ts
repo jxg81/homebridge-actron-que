@@ -159,7 +159,7 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
       if (error instanceof Error) {
         this.log.error(error.message);
       }
-      this.log.error('Plugin disabled, please review error log and check your config file then restart Homebridge');
+      this.log.error('Plugin disabled. Please review error log, check your config file, then restart Homebridge');
     }
   }
 }

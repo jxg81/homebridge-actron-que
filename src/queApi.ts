@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import fetch, { Request, Response, FetchError } from 'node-fetch';
-import { apiToken, tokenCollection, PowerState, validApiCommands, ZoneStatus, HvacStatus, CommandResult } from './types';
+import { apiToken, tokenCollection, PowerState, validApiCommands, ZoneStatus, HvacStatus, CommandResult, ApiAccessError } from './types';
 import { Logger } from 'homebridge';
 import { queApiCommands } from './queCommands';
 
@@ -62,7 +62,7 @@ export default class QueApi {
     this.bearerToken = JSON.parse(fs.readFileSync(this.bearerTokenFile).toString());
   }
 
-  async manageApiRequest(requestContent: Request, retries = 3, delay = 3) {
+  async manageApiRequest(requestContent: Request, retries = 3, delay = 3): Promise<object> {
     // manage api requests with a retry on error with delay
 
     // Simple function to cause a delay between retries
@@ -75,25 +75,25 @@ export default class QueApi {
     };
 
     let response: Response;
+    let errorResponse: ApiAccessError;
     try {
       response = await fetch(requestContent);
     // This error block will allow for around one day of retries if there is a network related failing.
     // this doesnt work well if things are already running and net drops, as new requests keep queuing
     // need a blocking method or enable value return that can be managed downstream while logging error
+    // What i want to do here is cleanly exit the request, log an erorr, and manage the downstream impacts graecfully
     } catch (error) {
       const fError = error as FetchError;
-      if (retries > 0 &&
-         (fError.code === 'EHOSTDOWN' ||
+      if (fError.code === 'EHOSTDOWN' ||
           fError.code === 'EHOSTUNREACH' ||
           fError.code === 'ETIMEDOUT' ||
           fError.code === 'ENETUNREACH' ||
-          fError.code === 'ENOTFOUND')) {
-        retries -0.01;
-        this.log.info(`Network connection issue, retrying in five minutes, attempt no. ${Math.round((3-retries) * 100)}:`, fError.message);
-        await wait(300);
-        response = await this.manageApiRequest(requestContent, retries);
+          fError.code === 'ENOTFOUND') {
+        this.log.info('Cannot reach Que cloud service, check your network connection', fError.message);
+        errorResponse = {apiAccessError: fError};
+        return errorResponse;
       } else {
-        this.log.error(`Error attempting API fetch, unable to reach API for ${(3-retries)*5}minutes`);
+        this.log.error('Unexpected error during API request:', fError.message);
         throw Error(`Unexpected error during API request: \n ${fError.message}`);
       }
     }
@@ -160,7 +160,7 @@ export default class QueApi {
     return this.apiClinetName + '-' + randomNumber;
   }
 
-  private async getRefreshToken() {
+  private async getRefreshToken(): Promise<apiToken> {
     // Registers the clinet if not already registered and collects the refresh (access) token
     // refresh token will be stored to a file for perssistence
     const url: string = this.basePath + '/api/v0/client/user-devices';
@@ -182,8 +182,11 @@ export default class QueApi {
     } catch (error) {
       if (error instanceof Error) {
         this.log.error(error.message);
-        throw error;
+        return this.refreshToken;
       }
+    }
+    if ('apiAccessError' in response) {
+      return this.refreshToken;
     }
     this.refreshToken = {expires: Date.parse(response['expires']), token: response['pairingToken']};
     fs.writeFile(this.refreshTokenFile, JSON.stringify(this.refreshToken), error => {
@@ -198,7 +201,7 @@ export default class QueApi {
     return this.refreshToken;
   }
 
-  private async getBearerToken() {
+  private async getBearerToken(): Promise<apiToken> {
     // Collects bearer token using refresh token and store to file for persistence
     // the token is returned with 'expires_in' relative time, function converts
     // this to expires_at absolute time (minus 5 minutes) for ease of checking
@@ -212,15 +215,26 @@ export default class QueApi {
         client_id: 'app',
       }),
     });
-
-    const response = await this.manageApiRequest(preparedRequest);
+    // Avoiding the writing of bad data to the bearer token file by catching errors
+    let response: object = {};
+    try {
+      response = await this.manageApiRequest(preparedRequest);
+    } catch (error) {
+      if (error instanceof Error) {
+        this.log.error(error.message);
+        return this.bearerToken;
+      }
+    }
+    if ('apiAccessError' in response) {
+      return this.bearerToken;
+    }
     const expiresAt: number = Date.now() + (response['expires_in'] * 1000 ) - 300;
     this.bearerToken = {expires: expiresAt, token: response['access_token']};
     fs.writeFile(this.bearerTokenFile, JSON.stringify(this.bearerToken), error => {
       if (error){
         if (error instanceof Error) {
           this.log.error(error.message);
-          throw error;
+          return this.bearerToken;
         }
       }
       this.log.info(`new bearer token saved to ${this.bearerTokenFile}`);
@@ -245,7 +259,7 @@ export default class QueApi {
     return result;
   }
 
-  private async getAcSystems() {
+  private async getAcSystems(): Promise<void> {
     // Get a list of all AC systems in the account and select the correct unit
     // logic assumes a sinle unit in your account, but if there is multiple you can specify whcih one you want
     const url : string = this.basePath + '/api/v0/client/ac-systems';
@@ -253,8 +267,19 @@ export default class QueApi {
       method: 'GET',
       headers: {'Authorization': `Bearer ${this.bearerToken.token}`},
     });
-
-    const response = await this.manageApiRequest(preparedRequest);
+    // Killing 
+    let response: object = {};
+    try {
+      response = await this.manageApiRequest(preparedRequest);
+    } catch (error) {
+      if (error instanceof Error) {
+        this.log.error(error.message);
+        throw Error(error.message);
+      }
+    }
+    if ('apiAccessError' in response) {
+      throw Error('Couldnt reach Actron Que Cloud to retrieve system list and intialise plugin');
+    }
     const systemList: object[] = response['_embedded']['ac-system'];
     // if there is no serial provided and only one system then assume this is the target system
     if (systemList.length === 1) {
@@ -283,6 +308,11 @@ export default class QueApi {
     });
 
     const response = await this.manageApiRequest(preparedRequest);
+
+    if ('apiAccessError' in response) {
+      const currentStatus: HvacStatus = {apiError: true, zoneCurrentStatus: []};
+      return currentStatus;
+    }
     const masterCurrentSettings: object = response['lastKnownState']['UserAirconSettings'];
     const compressorCurrentState: object = response['lastKnownState']['LiveAircon'];
     const masterCurrentState: object = response['lastKnownState']['MasterInfo'];
@@ -331,6 +361,7 @@ export default class QueApi {
     // This is the standardised format for the master controller. again, this wil be useful if i need to do
     // this for another AC type
     const currentStatus: HvacStatus = {
+      apiError: false,
       powerState: (masterCurrentSettings['isOn'] === true) ? PowerState.ON : PowerState.OFF,
       climateMode: masterCurrentSettings['Mode'],
       compressorMode: compressorCurrentState['CompressorMode'],
@@ -347,7 +378,7 @@ export default class QueApi {
       compressorCurrentTemp: compressorCurrentState['CompressorLiveTemperature'],
       zoneCurrentStatus: zoneCurrentStatus,
     };
-    this.log.debug(`got current status from Actron Cloud:\n ${JSON.stringify(currentStatus)}`);
+    this.log.debug(`Got current status from Actron Cloud:\n ${JSON.stringify(currentStatus)}`);
     return currentStatus;
   }
 
@@ -363,8 +394,11 @@ export default class QueApi {
       body: JSON.stringify(command),
     });
     const response = await this.manageApiRequest(preparedRequest);
-    if (response.type === 'ack') {
-      this.log.debug(`Command sucessful, 'ack' recieved from Actron Cloud:\n ${JSON.stringify(response.value)}`);
+
+    if ('apiAccessError' in response) {
+      return CommandResult.API_ERROR;
+    } else if (response['type'] === 'ack') {
+      this.log.debug(`Command sucessful, 'ack' recieved from Actron Cloud:\n ${JSON.stringify(response['value'])}`);
       return CommandResult.SUCCESS;
     } else {
       this.log.debug(`Command failed, NO 'ack' recieved from Actron Cloud:\n 

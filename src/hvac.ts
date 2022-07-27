@@ -44,22 +44,28 @@ export class HvacUnit {
   }
 
   async getStatus(): Promise<HvacStatus> {
-    const currentStatus = await this.apiInterface.getStatus();
-    this.powerState = currentStatus.powerState;
-    this.climateMode = currentStatus.climateMode;
-    this.compressorMode = currentStatus.compressorMode;
-    this.fanMode = currentStatus.fanMode;
-    this.masterCoolingSetTemp = currentStatus.masterCoolingSetTemp;
-    this.masterHeatingSetTemp = currentStatus.masterHeatingSetTemp;
-    this.compressorChasingTemp = currentStatus.compressorChasingTemp;
-    this.compressorCurrentTemp = currentStatus.compressorCurrentTemp;
-    this.awayMode = currentStatus.awayMode;
-    this.quietMode = currentStatus.quietMode;
-    this.controlAllZones = currentStatus.controlAllZones;
-    this.outdoorTemp = currentStatus.outdoorTemp;
-    this.masterCurrentTemp = currentStatus.masterCurrentTemp;
-    this.masterHumidity = currentStatus.masterCurrentHumidity;
-    this.zoneData = currentStatus.zoneCurrentStatus;
+    const status = await this.apiInterface.getStatus();
+
+    if (status.apiError) {
+      this.log.info('Failed to refresh status, Actron Que Cloud unreachable');
+      return status;
+    }
+
+    this.powerState = (status.powerState === undefined) ? this.powerState : status.powerState;
+    this.climateMode = (status.climateMode === undefined) ? this.climateMode : status.climateMode;
+    this.compressorMode = (status.compressorMode === undefined) ? this.compressorMode : status.compressorMode;
+    this.fanMode = (status.fanMode === undefined) ? this.fanMode : status.fanMode;
+    this.masterCoolingSetTemp = (status.masterCoolingSetTemp === undefined) ? this.masterCoolingSetTemp : status.masterCoolingSetTemp;
+    this.masterHeatingSetTemp = (status.masterHeatingSetTemp === undefined) ? this.masterHeatingSetTemp : status.masterHeatingSetTemp ;
+    this.compressorChasingTemp = (status.compressorChasingTemp === undefined) ? this.compressorChasingTemp : status.compressorChasingTemp;
+    this.compressorCurrentTemp = (status.compressorCurrentTemp === undefined) ? this.compressorCurrentTemp : status.compressorCurrentTemp;
+    this.awayMode = (status.awayMode === undefined) ? this.awayMode : status.awayMode;
+    this.quietMode = (status.quietMode === undefined) ? this.quietMode : status.quietMode;
+    this.controlAllZones = (status.controlAllZones === undefined) ? this.controlAllZones : status.controlAllZones;
+    this.outdoorTemp = (status.outdoorTemp === undefined) ? this.outdoorTemp : status.outdoorTemp ;
+    this.masterCurrentTemp = (status.masterCurrentTemp === undefined) ? this.masterCurrentTemp : status.masterCurrentTemp;
+    this.masterHumidity = (status.masterCurrentHumidity === undefined) ? this.masterHumidity : status.masterCurrentHumidity;
+    this.zoneData = (status.zoneCurrentStatus === undefined) ? this.zoneData : status.zoneCurrentStatus;
 
     // logic here is compare zoneData with zoneInstances.
     // if a zone DOES exist in zoneInstance for corresponding zoneData then run .updateStatus on the instance with the data
@@ -72,7 +78,7 @@ export class HvacUnit {
         this.zoneInstances.push(new HvacZone(this.log, this.apiInterface, zone));
       }
     }
-    return currentStatus;
+    return status;
   }
 
   async setPowerStateOn(): Promise<PowerState> {
@@ -85,9 +91,11 @@ export class HvacUnit {
       const response = await this.apiInterface.runCommand(validApiCommands.ON);
       if (response === CommandResult.SUCCESS) {
         this.powerState=PowerState.ON;
-      } else {
+      } else if (response === CommandResult.FAILURE) {
         await this.getStatus();
-        this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
+        this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
+      } else {
+        this.log.info('Failed to send command, Actron Que Cloud unreachable');
       }
     }
     return this.powerState;
@@ -103,9 +111,11 @@ export class HvacUnit {
       const response = await this.apiInterface.runCommand(validApiCommands.OFF);
       if (response === CommandResult.SUCCESS) {
         this.powerState=PowerState.OFF;
-      } else {
+      } else if (response === CommandResult.FAILURE) {
         await this.getStatus();
-        this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
+        this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
+      } else {
+        this.log.info('Failed to send command, Actron Que Cloud unreachable');
       }
     }
     return this.powerState;
@@ -116,9 +126,11 @@ export class HvacUnit {
     const response = await this.apiInterface.runCommand(validApiCommands.HEAT_SET_POINT, coolTemp, heatTemp);
     if (response === CommandResult.SUCCESS) {
       this.masterHeatingSetTemp=heatTemp;
-    } else {
+    } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
-      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
+      this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
+    } else {
+      this.log.info('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.masterHeatingSetTemp;
   }
@@ -128,9 +140,11 @@ export class HvacUnit {
     const response = await this.apiInterface.runCommand(validApiCommands.COOL_SET_POINT, coolTemp, heatTemp);
     if (response === CommandResult.SUCCESS) {
       this.masterCoolingSetTemp=coolTemp;
-    } else {
+    } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
-      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
+      this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
+    } else {
+      this.log.info('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.masterCoolingSetTemp;
   }
@@ -141,9 +155,11 @@ export class HvacUnit {
     if (response === CommandResult.SUCCESS) {
       this.masterCoolingSetTemp=coolTemp;
       this.masterHeatingSetTemp=heatTemp;
-    } else {
+    } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
-      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
+      this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
+    } else {
+      this.log.info('Failed to send command, Actron Que Cloud unreachable');
     }
     return [this.masterCoolingSetTemp, this.masterHeatingSetTemp=heatTemp];
   }
@@ -152,9 +168,11 @@ export class HvacUnit {
     const response = await this.apiInterface.runCommand(validApiCommands.CLIMATE_MODE_AUTO);
     if (response === CommandResult.SUCCESS) {
       this.climateMode=ClimateMode.AUTO;
-    } else {
+    } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
-      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
+      this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
+    } else {
+      this.log.info('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.climateMode;
   }
@@ -163,9 +181,11 @@ export class HvacUnit {
     const response = await this.apiInterface.runCommand(validApiCommands.CLIMATE_MODE_COOL);
     if (response === CommandResult.SUCCESS) {
       this.climateMode=ClimateMode.COOL;
-    } else {
+    } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
-      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
+      this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
+    } else {
+      this.log.info('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.climateMode;
   }
@@ -174,9 +194,11 @@ export class HvacUnit {
     const response = await this.apiInterface.runCommand(validApiCommands.CLIMATE_MODE_HEAT);
     if (response === CommandResult.SUCCESS) {
       this.climateMode=ClimateMode.HEAT;
-    } else {
+    } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
-      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
+      this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
+    } else {
+      this.log.info('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.climateMode;
   }
@@ -185,9 +207,11 @@ export class HvacUnit {
     const response = await this.apiInterface.runCommand(validApiCommands.CLIMATE_MODE_FAN);
     if (response === CommandResult.SUCCESS) {
       this.climateMode=ClimateMode.FAN;
-    } else {
+    } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
-      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
+      this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
+    } else {
+      this.log.info('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.climateMode;
   }
@@ -196,9 +220,11 @@ export class HvacUnit {
     const response = await this.apiInterface.runCommand(validApiCommands.FAN_MODE_AUTO);
     if (response === CommandResult.SUCCESS) {
       this.fanMode=FanMode.AUTO;
-    } else {
+    } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
-      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
+      this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
+    } else {
+      this.log.info('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.fanMode;
   }
@@ -207,9 +233,11 @@ export class HvacUnit {
     const response = await this.apiInterface.runCommand(validApiCommands.FAN_MODE_LOW);
     if (response === CommandResult.SUCCESS) {
       this.fanMode=FanMode.LOW;
-    } else {
+    } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
-      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
+      this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
+    } else {
+      this.log.info('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.fanMode;
   }
@@ -218,9 +246,11 @@ export class HvacUnit {
     const response = await this.apiInterface.runCommand(validApiCommands.FAN_MODE_MEDIUM);
     if (response === CommandResult.SUCCESS) {
       this.fanMode=FanMode.MEDIUM;
-    } else {
+    } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
-      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
+      this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
+    } else {
+      this.log.info('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.fanMode;
   }
@@ -229,9 +259,11 @@ export class HvacUnit {
     const response = await this.apiInterface.runCommand(validApiCommands.FAN_MODE_HIGH);
     if (response === CommandResult.SUCCESS) {
       this.fanMode=FanMode.HIGH;
-    } else {
+    } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
-      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
+      this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
+    } else {
+      this.log.info('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.fanMode;
   }
@@ -240,9 +272,11 @@ export class HvacUnit {
     const response = await this.apiInterface.runCommand(validApiCommands.AWAY_MODE_ON);
     if (response === CommandResult.SUCCESS) {
       this.awayMode=true;
-    } else {
+    } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
-      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
+      this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
+    } else {
+      this.log.info('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.awayMode;
   }
@@ -251,9 +285,11 @@ export class HvacUnit {
     const response = await this.apiInterface.runCommand(validApiCommands.AWAY_MODE_OFF);
     if (response === CommandResult.SUCCESS) {
       this.awayMode=false;
-    } else {
+    } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
-      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
+      this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
+    } else {
+      this.log.info('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.awayMode;
   }
@@ -262,9 +298,11 @@ export class HvacUnit {
     const response = await this.apiInterface.runCommand(validApiCommands.QUIET_MODE_ON);
     if (response === CommandResult.SUCCESS) {
       this.quietMode=true;
-    } else {
+    } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
-      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
+      this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
+    } else {
+      this.log.info('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.quietMode;
   }
@@ -273,9 +311,11 @@ export class HvacUnit {
     const response = await this.apiInterface.runCommand(validApiCommands.QUIET_MODE_OFF);
     if (response === CommandResult.SUCCESS) {
       this.quietMode=false;
-    } else {
+    } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
-      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
+      this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
+    } else {
+      this.log.info('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.quietMode;
   }
@@ -284,9 +324,11 @@ export class HvacUnit {
     const response = await this.apiInterface.runCommand(validApiCommands.CONTROL_ALL_ZONES_ON);
     if (response === CommandResult.SUCCESS) {
       this.controlAllZones=true;
-    } else {
+    } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
-      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
+      this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
+    } else {
+      this.log.info('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.controlAllZones;
   }
@@ -295,9 +337,11 @@ export class HvacUnit {
     const response = await this.apiInterface.runCommand(validApiCommands.CONTROL_ALL_ZONES_OFF);
     if (response === CommandResult.SUCCESS) {
       this.controlAllZones=false;
-    } else {
+    } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
-      this.log.debug(`Failed to set master ${this.name}, refreshing zone state from API`);
+      this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
+    } else {
+      this.log.info('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.controlAllZones;
   }

@@ -92,12 +92,16 @@ export class MasterControllerAccessory {
     this.hvacService.updateCharacteristic(this.platform.Characteristic.CoolingThresholdTemperature, this.getCoolingThresholdTemperature());
     this.hvacService.updateCharacteristic(this.platform.Characteristic.RotationSpeed, this.getFanMode());
     this.humidityService.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.getHumidity());
-    this.platform.log.debug('Refreshed device state from hvac instance:\n', JSON.stringify(currentStatus));
+    if (currentStatus.apiError) {
+      this.platform.log.debug('Cannot reach Que cloud, refreshing HomeKit accessory state using cached data\n');
+    } else {
+      this.platform.log.debug('Succesfully refreshed HomeKit accessory state from Que cloud\n');
+    }
   }
 
   getHumidity(): CharacteristicValue {
     const currentHumidity = this.platform.hvacInstance.masterHumidity;
-    this.platform.log.debug('Got Humidity -> ', currentHumidity);
+    this.platform.log.debug('Got Master Humidity -> ', currentHumidity);
     return currentHumidity;
   }
 
@@ -110,12 +114,12 @@ export class MasterControllerAccessory {
         this.platform.hvacInstance.setPowerStateOn();
         break;
     }
-    this.platform.log.debug('Set Power State -> ', value);
+    this.platform.log.debug('Set Master Power State -> ', value);
   }
 
   getPowerState(): CharacteristicValue {
     const powerState = (this.platform.hvacInstance.powerState === PowerState.ON) ? 1 : 0;
-    this.platform.log.debug('Got Power State -> ', powerState);
+    this.platform.log.debug('Got Master Power State -> ', powerState);
     return powerState;
   }
 
@@ -134,9 +138,9 @@ export class MasterControllerAccessory {
         break;
       default:
         currentMode = 0;
-        this.platform.log.debug('Failed to get a valid compressor mode -> ', compressorMode);
+        this.platform.log.debug('Failed To Get Master Valid Compressor Mode -> ', compressorMode);
     }
-    this.platform.log.debug('Got current compressor mode -> ', compressorMode);
+    this.platform.log.debug('Got Master Compressor Mode -> ', compressorMode);
     return currentMode;
   }
 
@@ -155,9 +159,9 @@ export class MasterControllerAccessory {
         this.platform.hvacInstance.getStatus();
         break;
       default:
-        this.platform.log.debug('Failed to set climate mode -> ', value);
+        this.platform.log.debug('Failed To Set Master Climate Mode -> ', value);
     }
-    this.platform.log.debug('Set climate mode -> ', value);
+    this.platform.log.debug('Set Master Climate Mode -> ', value);
   }
 
   getTargetClimateMode(): CharacteristicValue {
@@ -175,15 +179,15 @@ export class MasterControllerAccessory {
         break;
       default:
         currentMode = 0;
-        this.platform.log.debug('Failed to get target climate mode -> ', climateMode);
+        this.platform.log.debug('Failed To Get Master Target Climate Mode -> ', climateMode);
     }
-    this.platform.log.debug('Got target climate mode -> ', climateMode);
+    this.platform.log.debug('Got Master Target Climate Mode -> ', climateMode);
     return currentMode;
   }
 
   getCurrentTemperature(): CharacteristicValue {
     const currentTemp = this.platform.hvacInstance.masterCurrentTemp;
-    this.platform.log.debug('Got current indoor temperature -> ', currentTemp);
+    this.platform.log.debug('Got Master Current Indoor Temperature -> ', currentTemp);
     return currentTemp;
   }
 
@@ -194,12 +198,12 @@ export class MasterControllerAccessory {
     }
     this.platform.hvacInstance.setHeatTemp(value as number);
     this.platform.hvacInstance.getStatus();
-    this.platform.log.debug('Set target heating temperature -> ', value);
+    this.platform.log.debug('Set Master Target Heating Temperature -> ', value);
   }
 
   getHeatingThresholdTemperature(): CharacteristicValue {
     const targetTemp = this.platform.hvacInstance.masterHeatingSetTemp;
-    this.platform.log.debug('Got target heating temerature -> ', targetTemp);
+    this.platform.log.debug('Got Master Target Heating Temerature -> ', targetTemp);
     return targetTemp;
   }
 
@@ -210,12 +214,12 @@ export class MasterControllerAccessory {
     }
     this.platform.hvacInstance.setCoolTemp(value as number);
     this.platform.hvacInstance.getStatus();
-    this.platform.log.debug('Set taget cooling temperature -> ', value);
+    this.platform.log.debug('Set Master Target Cooling Temperature -> ', value);
   }
 
   getCoolingThresholdTemperature(): CharacteristicValue {
     const targetTemp = this.platform.hvacInstance.masterCoolingSetTemp;
-    this.platform.log.debug('Got target cooling temperature -> ', targetTemp);
+    this.platform.log.debug('Got Master Target Cooling Temperature -> ', targetTemp);
     return targetTemp;
   }
 
@@ -234,7 +238,7 @@ export class MasterControllerAccessory {
         this.platform.hvacInstance.setFanModeAuto();
         break;
     }
-    this.platform.log.debug('Set the fan mode 91-100:Auto, 1-30:Low, 31-60:Medium, 61-90:High -> ', value);
+    this.platform.log.debug('Set Master Fan Mode 91-100:Auto, 1-30:Low, 31-60:Medium, 61-90:High -> ', value);
   }
 
   getFanMode(): CharacteristicValue {
@@ -255,9 +259,9 @@ export class MasterControllerAccessory {
         break;
       default:
         currentMode = 0;
-        this.platform.log.debug('Failed to get current fan mode -> ', fanMode);
+        this.platform.log.debug('Failed To Get Master Current Fan Mode -> ', fanMode);
     }
-    this.platform.log.debug('Got current fan mode -> ', fanMode);
+    this.platform.log.debug('Got Master Current Fan Mode -> ', fanMode);
     return currentMode;
   }
 }

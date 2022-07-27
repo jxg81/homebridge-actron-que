@@ -4,6 +4,7 @@ import { HvacZone } from './hvacZone';
 export enum CommandResult {
   SUCCESS = 'SUCCESS',
   FAILURE = 'FAILURE',
+  API_ERROR = 'API_ERROR',
 }
 
 export enum PowerState {
@@ -86,6 +87,10 @@ export interface tokenCollection {
     bearerToken: apiToken;
   }
 
+export interface ApiAccessError {
+  apiAccessError: Error;
+}
+
 export interface ZoneStatus {
     zoneName: string;
     zoneIndex: number;
@@ -103,20 +108,21 @@ export interface ZoneStatus {
 }
 
 export interface HvacStatus {
-  powerState: PowerState;
-  climateMode: ClimateMode;
-  compressorMode: CompressorMode;
-  fanMode: FanMode;
-  awayMode: boolean;
-  quietMode: boolean;
-  controlAllZones: boolean;
-  masterCoolingSetTemp: number;
-  masterHeatingSetTemp: number;
-  masterCurrentTemp: number;
-  masterCurrentHumidity: number;
-  outdoorTemp: number;
-  compressorChasingTemp: number;
-  compressorCurrentTemp: number;
+  apiError: boolean;
+  powerState?: PowerState;
+  climateMode?: ClimateMode;
+  compressorMode?: CompressorMode;
+  fanMode?: FanMode;
+  awayMode?: boolean;
+  quietMode?: boolean;
+  controlAllZones?: boolean;
+  masterCoolingSetTemp?: number;
+  masterHeatingSetTemp?: number;
+  masterCurrentTemp?: number;
+  masterCurrentHumidity?: number;
+  outdoorTemp?: number;
+  compressorChasingTemp?: number;
+  compressorCurrentTemp?: number;
   zoneCurrentStatus: ZoneStatus[];
   }
 
