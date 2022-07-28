@@ -83,30 +83,30 @@ export default class QueApi {
     // need a blocking method or enable value return that can be managed downstream while logging error
     // What i want to do here is cleanly exit the request, log an erorr, and manage the downstream impacts graecfully
     } catch (error) {
-      const fError = error as FetchError;
-      if (fError.code === 'EHOSTDOWN' ||
-          fError.code === 'EHOSTUNREACH' ||
-          fError.code === 'ETIMEDOUT' ||
-          fError.code === 'ENETUNREACH' ||
-          fError.code === 'ENOTFOUND') {
-        this.log.info('Cannot reach Que cloud service, check your network connection', fError.message);
-        errorResponse = {apiAccessError: fError};
+      const fetchError = error as FetchError;
+      if (fetchError.code === 'EHOSTDOWN' ||
+          fetchError.code === 'EHOSTUNREACH' ||
+          fetchError.code === 'ETIMEDOUT' ||
+          fetchError.code === 'ENETUNREACH' ||
+          fetchError.code === 'ENOTFOUND') {
+        this.log.info('Cannot reach Que cloud service, check your network connection', fetchError.message);
+        errorResponse = {apiAccessError: fetchError};
         return errorResponse;
       } else {
-        this.log.error('Unexpected error during API request:', fError.message);
-        throw Error(`Unexpected error during API request: \n ${fError.message}`);
+        this.log.error('Unexpected error during API request:', fetchError.message);
+        throw Error(`Unexpected error during API request: \n ${fetchError.message}`);
       }
     }
 
-    switch (response.status) {
+    switch (true) {
 
-      case (200):
+      case (response.status === 200):
         return response.json();
       // If the bearer token has expired then generate new token, update request and retry
       // error will be generated after max retries is reached, default of 3
       // added logic to clear out cached tokens in recurring error states to better handle cases
       // where the API access for the client has been revoked on the Que portal
-      case(401):
+      case(response.status === 401):
         if (retries > 1) {
           await wait();
           await this.tokenGenerator();
@@ -119,22 +119,22 @@ export default class QueApi {
           If you recently revoked access for clients on the Que portal, a restart should resolve the issue`);
         }
 
-      case(400):
+      case(response.status === 400):
         fs.writeFileSync(this.refreshTokenFile, '{"expires": 0, "token": ""}');
         fs.writeFileSync(this.bearerTokenFile, '{"expires": 0, "token": ""}');
         throw Error(`Looks like you have a username or password issue, check your config file: http status code = ${response.status}\n
         If you recently revoked access for clients on the Que portal, a restart should resolve the issue`);
 
       // observed occasional gateway timeouts when querying the API. This allows for a couple of retrys before failing
-      case(504):
+      case(response.status >= 500 && response.status <= 599):
         if (retries > 0) {
           await wait();
           return this.manageApiRequest(requestContent, retries -1);
         } else {
-          fs.writeFileSync(this.refreshTokenFile, '{"expires": 0, "token": ""}');
-          fs.writeFileSync(this.bearerTokenFile, '{"expires": 0, "token": ""}');
-          throw Error(`Maximum retires excced on gateway timeout: http status code = ${response.status}\n
-          If you recently revoked access for clients on the Que portal, a restart should resolve the issue`);
+          const serverError = new Error(`Maximum retires excced following server error: http status code = ${response.status}`);
+          this.log.info('Que API returned a side server error', serverError.message);
+          errorResponse = {apiAccessError: serverError};
+          return errorResponse;
         }
 
       default:
@@ -387,7 +387,7 @@ export default class QueApi {
     // this function does what it says on the tin. Run the command issued to the system.
     // all possible commands are stored in 'queCommands'
     const command = queApiCommands[commandType](coolTemp, heatTemp, zoneIndex);
-
+    this.log.debug(`attempting to send command:\n ${JSON.stringify(command)}`);
     const preparedRequest = new Request (this.commandUrl, {
       method: 'POST',
       headers: {'Authorization': `Bearer ${this.bearerToken.token}`, 'Content-Type': 'application/json'},
@@ -396,6 +396,7 @@ export default class QueApi {
     const response = await this.manageApiRequest(preparedRequest);
 
     if ('apiAccessError' in response) {
+      this.log.debug(`API Error when attempting command send:\n ${JSON.stringify(command)}`);
       return CommandResult.API_ERROR;
     } else if (response['type'] === 'ack') {
       this.log.debug(`Command sucessful, 'ack' recieved from Actron Cloud:\n ${JSON.stringify(response['value'])}`);
