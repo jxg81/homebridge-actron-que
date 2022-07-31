@@ -35,7 +35,7 @@
           "description": "If zone is set outside of allowed +/- 2 degree variance then push the master temp to allow setting",
           "type": "boolean",
           "required": false,
-          "default": false
+          "default": true
         },
         "clientName": {
           "title": "Client Name",
