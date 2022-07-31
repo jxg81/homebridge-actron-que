@@ -19,7 +19,9 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
   private readonly password: string;
   readonly userProvidedSerialNo: string = '';
   readonly zonesFollowMaster: boolean = true;
-  readonly refreshInterval: number = 60000;
+  readonly zonesPushMaster: boolean = true;
+  readonly hardRefreshInterval: number = 60000;
+  readonly softRefreshInterval: number = 5000;
   hvacInstance!: HvacUnit;
 
   constructor(
@@ -42,11 +44,17 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
     } else {
       this.zonesFollowMaster = true;
     }
-    if (config['refreshInterval']) {
-      this.refreshInterval = config['refreshInterval'] * 1000;
-      this.log.debug('Auto refresh interval set to seconds', this.refreshInterval/1000);
+    if (config['zonesPushMaster']) {
+      this.zonesPushMaster = config['zonesPushMaster'];
+      this.log.debug('Zones Push Master is set to', this.zonesPushMaster);
     } else {
-      this.refreshInterval = 60000;
+      this.zonesPushMaster = true;
+    }
+    if (config['refreshInterval']) {
+      this.hardRefreshInterval = config['refreshInterval'] * 1000;
+      this.log.debug('Auto refresh interval set to seconds', this.hardRefreshInterval/1000);
+    } else {
+      this.hardRefreshInterval = 60000;
     }
 
     // Check Required Config Fields
@@ -85,7 +93,7 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
   async discoverDevices() {
     try {
       // Instantiate an instance of HvacUnit and connect the actronQueApi
-      this.hvacInstance = new HvacUnit(this.clientName, this.log, this.zonesFollowMaster);
+      this.hvacInstance = new HvacUnit(this.clientName, this.log, this.zonesFollowMaster, this.zonesPushMaster);
       let hvacSerial = '';
       hvacSerial = await this.hvacInstance.actronQueApi(this.username, this.password, this.userProvidedSerialNo);
       // Make sure we have havc master and zone data before adding devices

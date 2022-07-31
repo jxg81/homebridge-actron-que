@@ -26,20 +26,20 @@ export class OutdoorUnitAccessory {
     this.temperatureService.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
       .onGet(this.getCurrentTemperature.bind(this));
 
-    setInterval(() => this.updateAllDeviceCharacteristics(), this.platform.refreshInterval);
+    setInterval(() => this.softUpdateDeviceCharacteristics(), this.platform.softRefreshInterval);
 
   }
 
   // SET's are async as these need to wait on API response then cache the return value on the hvac Class instance
   // GET's run non async as this is a quick retrival from the hvac class insatnce cache
   // UPDATE is run Async as this polls the API first to confirm current cache state is accurate
-  async updateAllDeviceCharacteristics() {
+  async softUpdateDeviceCharacteristics() {
     this.temperatureService.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.getCurrentTemperature());
   }
 
   getCurrentTemperature(): CharacteristicValue {
     const currentTemp = this.platform.hvacInstance.outdoorTemp;
-    this.platform.log.debug('Got outdoor temperature -> ', currentTemp);
+    // this.platform.log.debug('Got outdoor temperature -> ', currentTemp);
     return currentTemp;
   }
 

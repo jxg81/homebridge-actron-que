@@ -27,7 +27,7 @@ export class HvacUnit {
   zoneData: ZoneStatus[] = [];
   zoneInstances: HvacZone[] = [];
 
-  constructor(name: string, private readonly log: Logger, readonly alwaysFollowMaster = true) {
+  constructor(name: string, private readonly log: Logger, readonly zonesFollowMaster = true, readonly zonesPushMaster = true) {
     this.name = name;
   }
 

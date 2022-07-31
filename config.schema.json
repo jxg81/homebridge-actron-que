@@ -30,6 +30,13 @@
           "required": false,
           "default": true
         },
+        "zonesPushMaster": {
+          "title": " Adjust Master Temp if Zone Set Outside of Permitted Thresholds",
+          "description": "If zone is set outside of allowed +/- 2 degree variance then push the master temp to allow setting",
+          "type": "boolean",
+          "required": false,
+          "default": false
+        },
         "clientName": {
           "title": "Client Name",
           "description": "Used to register plugin on Que Cloud as an 'Authorised Device' & default HomeKit name.",

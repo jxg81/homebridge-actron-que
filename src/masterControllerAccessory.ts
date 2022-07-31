@@ -76,14 +76,24 @@ export class MasterControllerAccessory {
       .onGet(this.getFanMode.bind(this));
 
     // Set the refresh interval for continous device characteristic updates. Hardcoded to 1min here, I should make this a config option
-    setInterval(() => this.updateAllDeviceCharacteristics(), this.platform.refreshInterval);
+    setInterval(() => this.hardUpdateDeviceCharacteristics(), this.platform.hardRefreshInterval);
+    setInterval(() => this.softUpdateDeviceCharacteristics(), this.platform.softRefreshInterval);
   }
 
   // SET's are async as these need to wait on API response then cache the return value on the hvac Class instance
   // GET's run non async as this is a quick retrival from the hvac class insatnce cache
   // UPDATE is run Async as this polls the API first to confirm current cache state is accurate
-  async updateAllDeviceCharacteristics() {
+  async hardUpdateDeviceCharacteristics() {
     const currentStatus = await this.platform.hvacInstance.getStatus();
+    this.softUpdateDeviceCharacteristics();
+    if (currentStatus.apiError) {
+      this.platform.log.debug('Cannot reach Que cloud, refreshing HomeKit accessory state using cached data\n');
+    } else {
+      this.platform.log.debug('Succesfully refreshed HomeKit accessory state from Que cloud\n');
+    }
+  }
+
+  async softUpdateDeviceCharacteristics() {
     this.hvacService.updateCharacteristic(this.platform.Characteristic.Active, this.getPowerState());
     this.hvacService.updateCharacteristic(this.platform.Characteristic.CurrentHeaterCoolerState, this.getCurrentCompressorMode());
     this.hvacService.updateCharacteristic(this.platform.Characteristic.TargetHeaterCoolerState, this.getTargetClimateMode());
@@ -92,16 +102,11 @@ export class MasterControllerAccessory {
     this.hvacService.updateCharacteristic(this.platform.Characteristic.CoolingThresholdTemperature, this.getCoolingThresholdTemperature());
     this.hvacService.updateCharacteristic(this.platform.Characteristic.RotationSpeed, this.getFanMode());
     this.humidityService.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.getHumidity());
-    if (currentStatus.apiError) {
-      this.platform.log.debug('Cannot reach Que cloud, refreshing HomeKit accessory state using cached data\n');
-    } else {
-      this.platform.log.debug('Succesfully refreshed HomeKit accessory state from Que cloud\n');
-    }
   }
 
   getHumidity(): CharacteristicValue {
     const currentHumidity = this.platform.hvacInstance.masterHumidity;
-    this.platform.log.debug('Got Master Humidity -> ', currentHumidity);
+    // this.platform.log.debug('Got Master Humidity -> ', currentHumidity);
     return currentHumidity;
   }
 
@@ -119,7 +124,7 @@ export class MasterControllerAccessory {
 
   getPowerState(): CharacteristicValue {
     const powerState = (this.platform.hvacInstance.powerState === PowerState.ON) ? 1 : 0;
-    this.platform.log.debug('Got Master Power State -> ', powerState);
+    // this.platform.log.debug('Got Master Power State -> ', powerState);
     return powerState;
   }
 
@@ -140,7 +145,7 @@ export class MasterControllerAccessory {
         currentMode = 0;
         this.platform.log.debug('Failed To Get Master Valid Compressor Mode -> ', compressorMode);
     }
-    this.platform.log.debug('Got Master Compressor Mode -> ', compressorMode);
+    // this.platform.log.debug('Got Master Compressor Mode -> ', compressorMode);
     return currentMode;
   }
 
@@ -181,19 +186,19 @@ export class MasterControllerAccessory {
         currentMode = 0;
         this.platform.log.debug('Failed To Get Master Target Climate Mode -> ', climateMode);
     }
-    this.platform.log.debug('Got Master Target Climate Mode -> ', climateMode);
+    // this.platform.log.debug('Got Master Target Climate Mode -> ', climateMode);
     return currentMode;
   }
 
   getCurrentTemperature(): CharacteristicValue {
     const currentTemp = this.platform.hvacInstance.masterCurrentTemp;
-    this.platform.log.debug('Got Master Current Indoor Temperature -> ', currentTemp);
+    // this.platform.log.debug('Got Master Current Indoor Temperature -> ', currentTemp);
     return currentTemp;
   }
 
   async setHeatingThresholdTemperature(value: CharacteristicValue) {
     if (this.platform.hvacInstance.controlAllZones === false &&
-      this.platform.hvacInstance.alwaysFollowMaster === true) {
+      this.platform.hvacInstance.zonesFollowMaster === true) {
       await this.platform.hvacInstance.setControlAllZonesOn();
     }
     this.platform.hvacInstance.setHeatTemp(value as number);
@@ -203,13 +208,13 @@ export class MasterControllerAccessory {
 
   getHeatingThresholdTemperature(): CharacteristicValue {
     const targetTemp = this.platform.hvacInstance.masterHeatingSetTemp;
-    this.platform.log.debug('Got Master Target Heating Temerature -> ', targetTemp);
+    // this.platform.log.debug('Got Master Target Heating Temerature -> ', targetTemp);
     return targetTemp;
   }
 
   async setCoolingThresholdTemperature(value: CharacteristicValue) {
     if (this.platform.hvacInstance.controlAllZones === false &&
-      this.platform.hvacInstance.alwaysFollowMaster === true) {
+      this.platform.hvacInstance.zonesFollowMaster === true) {
       await this.platform.hvacInstance.setControlAllZonesOn();
     }
     this.platform.hvacInstance.setCoolTemp(value as number);
@@ -219,7 +224,7 @@ export class MasterControllerAccessory {
 
   getCoolingThresholdTemperature(): CharacteristicValue {
     const targetTemp = this.platform.hvacInstance.masterCoolingSetTemp;
-    this.platform.log.debug('Got Master Target Cooling Temperature -> ', targetTemp);
+    // this.platform.log.debug('Got Master Target Cooling Temperature -> ', targetTemp);
     return targetTemp;
   }
 
@@ -261,7 +266,7 @@ export class MasterControllerAccessory {
         currentMode = 0;
         this.platform.log.debug('Failed To Get Master Current Fan Mode -> ', fanMode);
     }
-    this.platform.log.debug('Got Master Current Fan Mode -> ', fanMode);
+    // this.platform.log.debug('Got Master Current Fan Mode -> ', fanMode);
     return currentMode;
   }
 }

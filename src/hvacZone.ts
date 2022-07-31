@@ -93,11 +93,6 @@ export class HvacZone {
 
   async setHeatTemp(heatTemp: number): Promise<number> {
     const coolTemp = 0;
-    if (heatTemp > this.maxHeatSetPoint) {
-      heatTemp = this.maxHeatSetPoint;
-    } else if (heatTemp < this.minHeatSetPoint) {
-      heatTemp = this.minHeatSetPoint;
-    }
     const response = await this.apiInterface.runCommand(validApiCommands.ZONE_HEAT_SET_POINT, coolTemp, heatTemp, this.zoneIndex);
     if (response === CommandResult.SUCCESS) {
       this.currentHeatingSetTemp=heatTemp;
@@ -112,14 +107,9 @@ export class HvacZone {
 
   async setCoolTemp(coolTemp: number): Promise<number> {
     const heatTemp = 0;
-    if (coolTemp > this.maxCoolSetPoint) {
-      coolTemp = this.maxCoolSetPoint;
-    } else if (coolTemp < this.minCoolSetPoint) {
-      coolTemp = this.minCoolSetPoint;
-    }
     const response = await this.apiInterface.runCommand(validApiCommands.ZONE_COOL_SET_POINT, coolTemp, heatTemp, this.zoneIndex);
     if (response === CommandResult.SUCCESS) {
-      this.currentCoolingSetTemp=heatTemp;
+      this.currentCoolingSetTemp=coolTemp;
     } else if (response === CommandResult.FAILURE) {
       await this.getZoneStatus();
       this.log.debug(`Failed to set zone ${this.zoneIndex}, ${this.zoneName}, refreshing zone state from API`);

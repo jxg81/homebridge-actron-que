@@ -126,13 +126,15 @@ export default class QueApi {
         If you recently revoked access for clients on the Que portal, a restart should resolve the issue`);
 
       // observed occasional gateway timeouts when querying the API. This allows for a couple of retrys before failing
+      // made the fall through after max retires return a manageable error to the functions as Actron API can be flakey
+      // and want to avoid the plugin crashing completely and allow for a graceful recovery once things stabalise
       case(response.status >= 500 && response.status <= 599):
         if (retries > 0) {
           await wait();
           return this.manageApiRequest(requestContent, retries -1);
         } else {
-          const serverError = new Error(`Maximum retires excced following server error: http status code = ${response.status}`);
-          this.log.info('Que API returned a side server error', serverError.message);
+          const serverError = new Error(`Actron Que API returned a server side error: http status code = ${response.status}`);
+          this.log.info('Maximum retries exceeded ->', serverError.message);
           errorResponse = {apiAccessError: serverError};
           return errorResponse;
         }
