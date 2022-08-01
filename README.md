@@ -6,13 +6,18 @@ Use this plugin to control your Actron Que system with Apple HomeKit using Homeb
 
 This is an 'almost' feature complete implementation of the Que platfrom in HomeKit
 
-Now at version 1.0.2
+Now at version 1.1.0
  - Control either a single zone or multizone system
  - Master controller and each zone sensor will be exposed as unique, controllable accessory in HomeKit
- - Get temp and humidity data from all zones and master controller reported in homekit
+ - Get temp and humidity data from all zones and master controller reported in HomeKit
  - Get temp data from outdoor unit as a seperate accessory
  - Report battery level on zone sensors and get low battery alerts in the home app
  - Support for homebridge config UI
+
+New in version 1.1.0
+ - Graceful recovery from service or network outages
+ - Config option to control how adjustments to zone temperature are handled when set outside the +/- 2 degree variance with the master controller.
+ - Faster updating of current device status in HomeKit UI on HomeKit intiated state changes.
 
 Limitations - These options cannot be set via homekit:
  - Quiet Mode
@@ -24,7 +29,9 @@ Limitations - These options cannot be set via homekit:
 
 ## Controlling Zone Temperature Settings
 ---
-When modifying the zone temperature settings, the Que system only allows you to set a termprature that is within -2 degress (Heating) or +2 degress (Cooling) of the Master Control temprature. If you set a zone temprature that is outside of this +/- 2 degree range the plugin will translate the set temp to the allowable range. Im not sure if this is a limitation of my specific installation or standard for all Actron Que systems. If your system works differently please let me know and i can make some minor updates to make this variance range user configurable.
+When modifying the zone temperature settings, the Que system only allows you to set a termprature that is within -2 degress (Heating) or +2 degress (Cooling) of the Master Control temprature. With version 1.1.0 I have modified the default behavior to autmatically adjust the master temp if required when modifying a zone temp.
+Setting `zonesPushMaster` to false will revert to the prior behviour of constraing zones to the allowable max/min based on the current master setting. If you set a zone temprature that is outside of the +/- 2 degree range from the master the plugin will translate the set temp to the allowable range.
+
 
 ## Installation
 ---
@@ -53,7 +60,8 @@ If you are not using the Humbridge config UI you can add the following to your h
             "username": "<your_username>",
             "password": "<your_password>",
             "clientName": "homebridgeQue",
-            "zonesFollowMaster": true | false
+            "zonesFollowMaster": true | false,
+            "zonesPushMaster": true | false,
             "refreshInterval": 60,
             "deviceSerial": ""
         }]
@@ -112,6 +120,14 @@ default: true
 
 Setting this to true will make it so that any changes to the master controller temprature setting in homekit will ALWAYS be propogated to all zones. This is akin to toggling the 'Control All Zones' option on the Master Controller or in the Que mobile app.
 
+#### `zonesPushMaster`
+
+type: boolean 
+
+default: true
+
+Setting this to true will make it so that chnages to the zone temprature setting in homekit will push the master unit threshold temps for heat and cool if required. There is a +/- 2 degree variation permitted between the master temp and zone temps. Normally the Que native controls will restrict you to this temp range unless you manually adjust the master temp first. This option simply pushes the master temp to a new setting if you set the zone outside of the variance. Setting this to true has greatly increased my familys satisfaction with the controls.
+
 #### `deviceSerial`
 type: string (lowercase)
 
@@ -126,25 +142,37 @@ The plugin has been designed to manage the following HTTP error states
 
 #### Error 400
 ---
-The Que API returns a 400 status code when you attempt to authenticate with an invalid username or password. In this case you will see an Error loggeed to the Hombridge log suggesting that you check the username and password provided.
+The Que API returns a 400 status code when you attempt to authenticate with an invalid username or password. In this case you will see an Error loggeed to the Hombridge log suggesting that you check the username and password provided.  
+The error will also let you know that a restart may help if you recently revoked the client access through the que online portal. The reason the restart will help is because following this error the persistent storage of auth tokens is flushed in case there was an issue with the cached data.
 
-`Looks like you have a username or password issue, check your config file: http status code = 400`
+`Looks like you have a username or password issue, check your config file: http status code = 400`  
+`If you recently revoked access for clients on the Que portal, a restart should resolve the issue`
 
 #### Error 401
 ---
 If an invalid or expired bearer token is presented in a request to the Que API the server will respond with a 401 ('Unauthorised') status code. In this case, the plugin will automatically request a new bearer token, update the request and retry.
-The plugin is configured to retry a maximum of three times with a pause of three seconds between requests. If the maximum number of retires is exceeded you will see the following Error logged to the Homebrigde log file.
+The plugin is configured to retry a maximum of three times with a pause of three seconds between requests. If the maximum number of retires is exceeded you will see the following Error logged to the Homebrigde log file.  
+The error will also let you know that a restart may help if you recently revoked the client access through the que online portal. The reason the restart will help is because following this error the persistent storage of auth tokens is flushed in case there was an issue with the cached data.
 
-`Maximum retires excced on failed Authorisation: http status code = 401`
+`Maximum retires excced on failed Authorisation: http status code = 401`  
+`If you recently revoked access for clients on the Que portal, a restart should resolve the issue`
 
-#### Error 504
+#### Error 5xx
 ---
-During development of the plugin I noticed that the Que API occasionally fails to service a request from its backend and responds with a 504 (i think this is what causes the Que iphone app to be particularily awful to use). Waiting a second or two and retrying seems to reliably allow you to move past the error and carry on. For this reason the plugin will retry three times on a 504 status with a wait time of three seconds between retries. If the maximum number of retires is exceeded you will see the following Error logged to the Homebrigde log file.
+During development of the plugin I noticed that the Que API occasionally fails to service a request from its backend and responds with a 504 (i think this is what causes the Que iphone app to be particularily awful to use). Waiting a second or two and retrying seems to reliably allow you to move past the error and carry on. I also noted that on occasion the Que service will misbehave and return a range of 5xx errors (primarily 504 and 503). For this reason the plugin will retry three times on a 5xx status with a wait time of three seconds between retries. If the maximum number of retires is exceeded you will see the following Info message logged to the Homebrigde log file.
 
-`Maximum retires excced on gateway timeout: http status code = 504`
+`Maximum retries exceeded -> Actron Que API returned a server side error: http status code = 5xx`
+
+Generally these errors will resolve after time and things will keep on running. From version 1.1.0 this error handling was imporved to prevent the plugin terminating and allow for a graceful recovery once the Que API starts responding normally again.
 
 ### All other non-200
 ---
-All other errors will fall through to a default handler that will return the following Error in the Homebridge log.
+All other errors will fall through to a default handler that will return the following Error in the Homebridge log. As before, persistent auth data will be flushed to allow for a clean restart.
 
-`An unhandled error has occured: http status code = <status code>`
+`An unhandled error has occured: http status code = <status code>`  
+`If you recently revoked access for clients on the Que portal, a restart may resolve the issue`
+
+### Network Outages
+Begining with version 1.1.0 the plugin will now gracefully recover from network outages. The network MUST be available on startup, but if there is an outage during operation you will see the following Info message in the log and the plugin will resume functioning once the network is restored. 
+
+`Cannot reach Que cloud service, check your network connection <specific error condition>`
