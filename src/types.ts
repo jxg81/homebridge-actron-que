@@ -113,6 +113,7 @@ export interface HvacStatus {
   climateMode?: ClimateMode;
   compressorMode?: CompressorMode;
   fanMode?: FanMode;
+  fanRunning?: boolean;
   awayMode?: boolean;
   quietMode?: boolean;
   controlAllZones?: boolean;

@@ -342,7 +342,7 @@ export default class QueApi {
       // Format the data in a standard model that could be used with multiple HVAC types. Not sure if this was worth the effort
       // but if i have to create another HVAC plugin it will be worthwhile :)
       // This first section is the zone data, one of these per zone
-      // some versions of the zone sensor do not support humidity readings so if its undefined we will insert notSupported string
+      // some versions of the zone sensor do not support humidity readings so if its undefined we will insert notSupported
       const zoneData: ZoneStatus = {
         zoneName: zone['NV_Title'],
         zoneIndex: zoneIndex,
@@ -369,6 +369,7 @@ export default class QueApi {
       climateMode: masterCurrentSettings['Mode'],
       compressorMode: compressorCurrentState['CompressorMode'],
       fanMode: masterCurrentSettings['FanMode'],
+      fanRunning: compressorCurrentState['AmRunningFan'],
       awayMode: masterCurrentSettings['AwayMode'],
       quietMode: masterCurrentSettings['QuietMode'],
       controlAllZones: masterCurrentState['ControlAllZones'],

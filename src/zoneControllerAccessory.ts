@@ -163,6 +163,10 @@ export class ZoneControllerAccessory {
         currentMode = 0;
         this.platform.log.debug('Failed To Get a Valid Compressor Mode -> ', compressorMode);
     }
+    // if the fan is not running then update state to idle
+    if (!this.platform.hvacInstance.fanRunning) {
+      currentMode = 1;
+    }
     // this.platform.log.debug(`Got Zone ${this.zone.zoneName} current compressor mode -> `, compressorMode);
     return currentMode;
   }

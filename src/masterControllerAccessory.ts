@@ -145,6 +145,10 @@ export class MasterControllerAccessory {
         currentMode = 0;
         this.platform.log.debug('Failed To Get Master Valid Compressor Mode -> ', compressorMode);
     }
+    // if the fan is not running then update state to idle
+    if (!this.platform.hvacInstance.fanRunning) {
+      currentMode = 1;
+    }
     // this.platform.log.debug('Got Master Compressor Mode -> ', compressorMode);
     return currentMode;
   }

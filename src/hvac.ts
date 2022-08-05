@@ -14,6 +14,7 @@ export class HvacUnit {
   climateMode: ClimateMode = ClimateMode.UNKNOWN;
   fanMode: FanMode = FanMode.UNKNOWN;
   compressorMode: CompressorMode = CompressorMode.UNKNOWN;
+  fanRunning = false;
   awayMode = false;
   quietMode = false;
   controlAllZones = false;
@@ -55,6 +56,7 @@ export class HvacUnit {
     this.climateMode = (status.climateMode === undefined) ? this.climateMode : status.climateMode;
     this.compressorMode = (status.compressorMode === undefined) ? this.compressorMode : status.compressorMode;
     this.fanMode = (status.fanMode === undefined) ? this.fanMode : status.fanMode;
+    this.fanRunning = (status.fanRunning === undefined) ? this.fanRunning : status.fanRunning;
     this.masterCoolingSetTemp = (status.masterCoolingSetTemp === undefined) ? this.masterCoolingSetTemp : status.masterCoolingSetTemp;
     this.masterHeatingSetTemp = (status.masterHeatingSetTemp === undefined) ? this.masterHeatingSetTemp : status.masterHeatingSetTemp ;
     this.compressorChasingTemp = (status.compressorChasingTemp === undefined) ? this.compressorChasingTemp : status.compressorChasingTemp;
