@@ -6,6 +6,7 @@ export class HvacZone {
   readonly zoneName: string;
   readonly zoneIndex: number;
   readonly sensorId: string;
+  readonly zoneHumiditySensor: boolean;
   zoneEnabled: boolean;
   currentTemp: number;
   currentHeatingSetTemp: number;
@@ -28,7 +29,6 @@ export class HvacZone {
     this.sensorId = zoneStatus.sensorId;
     this.zoneEnabled = zoneStatus.zoneEnabled;
     this.currentTemp = zoneStatus.currentTemp;
-    this.currentHumidity = zoneStatus.currentHumidity;
     this.maxHeatSetPoint = zoneStatus.maxHeatSetPoint;
     this.minHeatSetPoint = zoneStatus.minHeatSetPoint;
     this.maxCoolSetPoint = zoneStatus.maxCoolSetPoint;
@@ -36,12 +36,20 @@ export class HvacZone {
     this.currentHeatingSetTemp = zoneStatus.currentHeatingSetTemp;
     this.currentCoolingSetTemp = zoneStatus.currentCoolingSetTemp;
     this.zoneSensorBattery = zoneStatus.zoneSensorBattery;
+
+    // some zone sensor versions do not report humidity
+    if (zoneStatus.currentHumidity === 'notSupported') {
+      this.zoneHumiditySensor = false;
+      this.currentHumidity = 0;
+    } else {
+      this.zoneHumiditySensor = false;
+      this.currentHumidity = zoneStatus.currentHumidity;
+    }
   }
 
   async pushStatusUpdate(zoneStatus: ZoneStatus) {
     this.zoneEnabled = zoneStatus.zoneEnabled;
     this.currentTemp = zoneStatus.currentTemp;
-    this.currentHumidity = zoneStatus.currentHumidity;
     this.maxHeatSetPoint = zoneStatus.maxHeatSetPoint;
     this.minHeatSetPoint = zoneStatus.minHeatSetPoint;
     this.maxCoolSetPoint = zoneStatus.maxCoolSetPoint;
@@ -49,6 +57,7 @@ export class HvacZone {
     this.currentHeatingSetTemp = zoneStatus.currentHeatingSetTemp;
     this.currentCoolingSetTemp = zoneStatus.currentCoolingSetTemp;
     this.zoneSensorBattery = zoneStatus.zoneSensorBattery;
+    this.currentHumidity = this.zoneHumiditySensor ? zoneStatus.currentHumidity as number : 0;
   }
 
   async getZoneStatus() {

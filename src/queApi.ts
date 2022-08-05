@@ -342,13 +342,13 @@ export default class QueApi {
       // Format the data in a standard model that could be used with multiple HVAC types. Not sure if this was worth the effort
       // but if i have to create another HVAC plugin it will be worthwhile :)
       // This first section is the zone data, one of these per zone
+      // some versions of the zone sensor do not support humidity readings so if its undefined we will insert notSupported string
       const zoneData: ZoneStatus = {
         zoneName: zone['NV_Title'],
         zoneIndex: zoneIndex,
         sensorId: sensorId,
         zoneEnabled: zoneEnabledState[zoneIndex],
         currentTemp: zone['LiveTemp_oC'],
-        currentHumidity: zone['LiveHumidity_pc'],
         maxHeatSetPoint: zone['MaxHeatSetpoint'],
         minHeatSetPoint: zone['MinHeatSetpoint'],
         maxCoolSetPoint: zone['MaxCoolSetpoint'],
@@ -356,6 +356,7 @@ export default class QueApi {
         currentHeatingSetTemp: zone['TemperatureSetpoint_Heat_oC'],
         currentCoolingSetTemp: zone['TemperatureSetpoint_Cool_oC'],
         zoneSensorBattery: zone['Sensors'][sensorId]['Battery_pc'],
+        currentHumidity: zone['LiveHumidity_pc'] === undefined ? 'notSupported' : zone['LiveHumidity_pc'],
       };
       zoneCurrentStatus.push(zoneData);
     }

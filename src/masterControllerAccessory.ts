@@ -113,10 +113,10 @@ export class MasterControllerAccessory {
   async setPowerState(value: CharacteristicValue) {
     switch (value) {
       case 0:
-        this.platform.hvacInstance.setPowerStateOff();
+        await this.platform.hvacInstance.setPowerStateOff();
         break;
       case 1:
-        this.platform.hvacInstance.setPowerStateOn();
+        await this.platform.hvacInstance.setPowerStateOn();
         break;
     }
     this.platform.log.debug('Set Master Power State -> ', value);
@@ -152,16 +152,13 @@ export class MasterControllerAccessory {
   async setTargetClimateMode(value: CharacteristicValue) {
     switch (value) {
       case this.platform.Characteristic.TargetHeaterCoolerState.AUTO:
-        this.platform.hvacInstance.setClimateModeAuto();
-        this.platform.hvacInstance.getStatus();
+        await this.platform.hvacInstance.setClimateModeAuto();
         break;
       case this.platform.Characteristic.TargetHeaterCoolerState.HEAT:
-        this.platform.hvacInstance.setClimateModeHeat();
-        this.platform.hvacInstance.getStatus();
+        await this.platform.hvacInstance.setClimateModeHeat();
         break;
       case this.platform.Characteristic.TargetHeaterCoolerState.COOL:
-        this.platform.hvacInstance.setClimateModeCool();
-        this.platform.hvacInstance.getStatus();
+        await this.platform.hvacInstance.setClimateModeCool();
         break;
       default:
         this.platform.log.debug('Failed To Set Master Climate Mode -> ', value);
@@ -201,8 +198,8 @@ export class MasterControllerAccessory {
       this.platform.hvacInstance.zonesFollowMaster === true) {
       await this.platform.hvacInstance.setControlAllZonesOn();
     }
-    this.platform.hvacInstance.setHeatTemp(value as number);
-    this.platform.hvacInstance.getStatus();
+    await this.platform.hvacInstance.setHeatTemp(value as number);
+    await this.platform.hvacInstance.getStatus();
     this.platform.log.debug('Set Master Target Heating Temperature -> ', value);
   }
 
@@ -217,8 +214,8 @@ export class MasterControllerAccessory {
       this.platform.hvacInstance.zonesFollowMaster === true) {
       await this.platform.hvacInstance.setControlAllZonesOn();
     }
-    this.platform.hvacInstance.setCoolTemp(value as number);
-    this.platform.hvacInstance.getStatus();
+    await this.platform.hvacInstance.setCoolTemp(value as number);
+    await this.platform.hvacInstance.getStatus();
     this.platform.log.debug('Set Master Target Cooling Temperature -> ', value);
   }
 
@@ -231,16 +228,16 @@ export class MasterControllerAccessory {
   async setFanMode(value: CharacteristicValue) {
     switch (true) {
       case (value <= 30):
-        this.platform.hvacInstance.setFanModeLow();
+        await this.platform.hvacInstance.setFanModeLow();
         break;
       case (value <= 60):
-        this.platform.hvacInstance.setFanModeMedium();
+        await this.platform.hvacInstance.setFanModeMedium();
         break;
       case (value <= 90):
-        this.platform.hvacInstance.setFanModeHigh();
+        await this.platform.hvacInstance.setFanModeHigh();
         break;
       case (value <= 100):
-        this.platform.hvacInstance.setFanModeAuto();
+        await this.platform.hvacInstance.setFanModeAuto();
         break;
     }
     this.platform.log.debug('Set Master Fan Mode 91-100:Auto, 1-30:Low, 31-60:Medium, 61-90:High -> ', value);

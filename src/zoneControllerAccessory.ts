@@ -6,7 +6,8 @@ import { HvacZone } from './hvacZone';
 // This class represents the master controller, a seperate class is used for representing zones (or will be once i write it)
 export class ZoneControllerAccessory {
   private hvacService: Service;
-  private humidityService: Service;
+  // some versions of the zone sensor do not support humidity
+  private humidityService: Service | null;
   private batteryService: Service;
 
   constructor(
@@ -25,25 +26,29 @@ export class ZoneControllerAccessory {
     this.hvacService = this.accessory.getService(this.platform.Service.HeaterCooler)
     || this.accessory.addService(this.platform.Service.HeaterCooler);
 
-    // Get or create the humidity sensor service.
-    this.humidityService = this.accessory.getService(this.platform.Service.HumiditySensor)
-    || this.accessory.addService(this.platform.Service.HumiditySensor);
+    // Set accesory display name, this is taken from discover devices in platform
+    this.hvacService.setCharacteristic(this.platform.Characteristic.Name, accessory.displayName);
 
     // Get or create the humidity sensor service.
     this.batteryService = this.accessory.getService(this.platform.Service.Battery)
     || this.accessory.addService(this.platform.Service.Battery);
 
-    // Set accesory display name, this is taken from discover devices in platform
-    this.hvacService.setCharacteristic(this.platform.Characteristic.Name, accessory.displayName);
-
-    // get humidity
-    this.humidityService.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity)
-      .onGet(this.getHumidity.bind(this));
+    // Get or create the humidity sensor service if the zone sensor supoprts humidity readings
+    if (this.zone.zoneHumiditySensor) {
+      this.humidityService = this.accessory.getService(this.platform.Service.HumiditySensor)
+          || this.accessory.addService(this.platform.Service.HumiditySensor);
+      // get humidity
+      this.humidityService.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity)
+        .onGet(this.getHumidity.bind(this));
+    } else {
+      this.humidityService = null;
+    }
 
     // get battery low
     this.batteryService.getCharacteristic(this.platform.Characteristic.StatusLowBattery)
       .onGet(this.getBatteryStatus.bind(this));
 
+    // get battery level
     this.batteryService.getCharacteristic(this.platform.Characteristic.BatteryLevel)
       .onGet(this.getBatteryLevel.bind(this));
 
@@ -96,9 +101,12 @@ export class ZoneControllerAccessory {
     this.hvacService.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.getCurrentTemperature());
     this.hvacService.updateCharacteristic(this.platform.Characteristic.HeatingThresholdTemperature, this.getHeatingThresholdTemperature());
     this.hvacService.updateCharacteristic(this.platform.Characteristic.CoolingThresholdTemperature, this.getCoolingThresholdTemperature());
-    this.humidityService.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.getHumidity());
     this.batteryService.updateCharacteristic(this.platform.Characteristic.StatusLowBattery, this.getBatteryStatus());
     this.batteryService.updateCharacteristic(this.platform.Characteristic.BatteryLevel, this.getBatteryLevel());
+
+    if (this.humidityService) {
+      this.humidityService.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.getHumidity());
+    }
   }
 
   getHumidity(): CharacteristicValue {
@@ -123,10 +131,10 @@ export class ZoneControllerAccessory {
   async setEnableState(value: CharacteristicValue) {
     switch (value) {
       case 0:
-        this.zone.setZoneDisable();
+        await this.zone.setZoneDisable();
         break;
       case 1:
-        this.zone.setZoneEnable();
+        await this.zone.setZoneEnable();
         break;
     }
     this.platform.log.debug(`Set Zone ${this.zone.zoneName} Enable State -> `, value);
@@ -162,13 +170,13 @@ export class ZoneControllerAccessory {
   async setTargetClimateMode(value: CharacteristicValue) {
     switch (value) {
       case this.platform.Characteristic.TargetHeaterCoolerState.AUTO:
-        this.platform.hvacInstance.setClimateModeAuto();
+        await this.platform.hvacInstance.setClimateModeAuto();
         break;
       case this.platform.Characteristic.TargetHeaterCoolerState.HEAT:
-        this.platform.hvacInstance.setClimateModeHeat();
+        await this.platform.hvacInstance.setClimateModeHeat();
         break;
       case this.platform.Characteristic.TargetHeaterCoolerState.COOL:
-        this.platform.hvacInstance.setClimateModeCool();
+        await this.platform.hvacInstance.setClimateModeCool();
         break;
     }
     this.platform.log.debug(`Set Zone ${this.zone.zoneName} Climate Mode -> `, value);
@@ -216,7 +224,7 @@ export class ZoneControllerAccessory {
     } else if (value < this.zone.minHeatSetPoint) {
       value = this.zone.minHeatSetPoint;
     }
-    this.zone.setHeatTemp(value as number);
+    await this.zone.setHeatTemp(value as number);
     this.platform.log.debug(`Set Zone ${this.zone.zoneName} Target Heating Temperature -> `, value);
   }
 
@@ -241,7 +249,7 @@ export class ZoneControllerAccessory {
     } else if (value < this.zone.minCoolSetPoint) {
       value = this.zone.minCoolSetPoint;
     }
-    this.zone.setCoolTemp(value as number);
+    await this.zone.setCoolTemp(value as number);
     this.platform.log.debug(`Set Zone ${this.zone.zoneName} Taget Cooling Temperature -> `, value);
   }
 

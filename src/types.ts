@@ -97,7 +97,7 @@ export interface ZoneStatus {
     sensorId: string;
     zoneEnabled: boolean;
     currentTemp: number;
-    currentHumidity: number;
+    currentHumidity: number | 'notSupported';
     maxHeatSetPoint: number;
     minHeatSetPoint: number;
     maxCoolSetPoint: number;
