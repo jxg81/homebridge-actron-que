@@ -6,13 +6,16 @@ Use this plugin to control your Actron Que system with Apple HomeKit using Homeb
 
 This is an 'almost' feature complete implementation of the Que platfrom in HomeKit
 
-Now at version 1.1.0
  - Control either a single zone or multizone system
  - Master controller and each zone sensor will be exposed as unique, controllable accessory in HomeKit
  - Get temp and humidity data from all zones and master controller reported in HomeKit
  - Get temp data from outdoor unit as a seperate accessory
  - Report battery level on zone sensors and get low battery alerts in the home app
  - Support for homebridge config UI
+
+ Fixes in version 1.1.1
+ - Fixed support for zone sensors that do not support humidity sensing -> `https://github.com/jxg81/homebridge-actron-que/issues/1`
+ - Improvements to device state transitions 
 
 New in version 1.1.0
  - Graceful recovery from service or network outages
