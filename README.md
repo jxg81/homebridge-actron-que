@@ -13,9 +13,12 @@ This is an 'almost' feature complete implementation of the Que platfrom in HomeK
  - Report battery level on zone sensors and get low battery alerts in the home app
  - Support for homebridge config UI
 
+New in version 1.2.0
+ - Device state will now show as idle when heating/cooling temp achieved and fan is not running
+
  Fixes in version 1.1.1
  - Fixed support for zone sensors that do not support humidity sensing -> `https://github.com/jxg81/homebridge-actron-que/issues/1`
- - Improvements to device state transitions 
+ - Improvements to device state transitions and status updates
 
 New in version 1.1.0
  - Graceful recovery from service or network outages
