@@ -139,7 +139,7 @@ type: string (lowercase)
 
 default: ""
 
-In most cases you can exclude this option or leave it blank. If you only have a single air con system if your Que account the plugin will auto-discover the target device serial number. If you have multiple Que systems in your account you will need to specify which system you want to control by entering the serail number here.  You can get your device serail numbers by logging in to que.actronair.com.au and looking at the list of authorised devices.
+In most cases you can exclude this option or leave it blank. If you only have a single air con system in your Que account the plugin will auto-discover the target device serial number. If you have multiple Que systems in your account you will need to specify which system you want to control by entering the serail number here. You can get your device serail numbers by logging in to que.actronair.com.au and looking at the list of authorised devices.
 
 
 ### HTTP Error Handling
