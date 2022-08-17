@@ -11,6 +11,7 @@ export enum PowerState {
     ON = 'ON',
     OFF = 'OFF',
     UNKNOWN = 'UNKNOWN',
+    NA = 'NA',
   }
 
 export enum ClimateMode {
@@ -109,6 +110,7 @@ export interface ZoneStatus {
 
 export interface HvacStatus {
   apiError: boolean;
+  cloudConnected?: boolean;
   powerState?: PowerState;
   climateMode?: ClimateMode;
   compressorMode?: CompressorMode;

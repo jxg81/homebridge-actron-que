@@ -87,7 +87,10 @@ export class MasterControllerAccessory {
     const currentStatus = await this.platform.hvacInstance.getStatus();
     this.softUpdateDeviceCharacteristics();
     if (currentStatus.apiError) {
-      this.platform.log.debug('Cannot reach Que cloud, refreshing HomeKit accessory state using cached data\n');
+      this.platform.log.error('Cannot reach Que cloud, refreshing HomeKit accessory state using cached data');
+    } else if (!currentStatus.cloudConnected) {
+      this.platform.log.error(`Master Controller is offline. Check Master Controller Internet/Wifi connection.\n
+      Refreshing HomeKit accessory state using cached data`);
     } else {
       this.platform.log.debug('Succesfully refreshed HomeKit accessory state from Que cloud\n');
     }

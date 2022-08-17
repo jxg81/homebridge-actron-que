@@ -1,5 +1,5 @@
 import QueApi from './queApi';
-import { PowerState, FanMode, ClimateMode, CompressorMode, validApiCommands, ZoneStatus, HvacStatus, CommandResult } from './types';
+import { PowerState, FanMode, ClimateMode, CompressorMode, validApiCommands, ZoneStatus, HvacStatus, CommandResult} from './types';
 import { Logger } from 'homebridge';
 import { HvacZone } from './hvacZone';
 
@@ -10,6 +10,7 @@ export class HvacUnit {
   serialNo = '';
   apiInterface!: QueApi;
 
+  cloudConnected = false;
   powerState: PowerState = PowerState.UNKNOWN;
   climateMode: ClimateMode = ClimateMode.UNKNOWN;
   fanMode: FanMode = FanMode.UNKNOWN;
@@ -52,6 +53,7 @@ export class HvacUnit {
       return status;
     }
 
+    this.cloudConnected = (status.cloudConnected === undefined) ? this.cloudConnected : status.cloudConnected;
     this.powerState = (status.powerState === undefined) ? this.powerState : status.powerState;
     this.climateMode = (status.climateMode === undefined) ? this.climateMode : status.climateMode;
     this.compressorMode = (status.compressorMode === undefined) ? this.compressorMode : status.compressorMode;

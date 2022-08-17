@@ -315,6 +315,7 @@ export default class QueApi {
       const currentStatus: HvacStatus = {apiError: true, zoneCurrentStatus: []};
       return currentStatus;
     }
+    const hvacOnline: boolean = response['isOnline'];
     const masterCurrentSettings: object = response['lastKnownState']['UserAirconSettings'];
     const compressorCurrentState: object = response['lastKnownState']['LiveAircon'];
     const masterCurrentState: object = response['lastKnownState']['MasterInfo'];
@@ -365,6 +366,7 @@ export default class QueApi {
     // this for another AC type
     const currentStatus: HvacStatus = {
       apiError: false,
+      cloudConnected: hvacOnline,
       powerState: (masterCurrentSettings['isOn'] === true) ? PowerState.ON : PowerState.OFF,
       climateMode: masterCurrentSettings['Mode'],
       compressorMode: compressorCurrentState['CompressorMode'],
