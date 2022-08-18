@@ -32,7 +32,27 @@ jobs:
     - name: json-to-file
       uses: devops-actions/json-to-file@v1.0.0
       with:
-        json: ${{ secrets.CONFIG_JSON }}
+        json: '{
+                "bridge": {
+                "name": "Homebridge Test",
+                "username": "FF:FF:FF:FF:FF:FF",
+                "port": 54321,
+                "pin": "123-45-678",
+                "advertiser": "avahi"
+                },
+                "platforms": [
+                    {
+                    "name": "ActronQue",
+                    "username": "${{ secrets.USERNAME }}",
+                    "password": "${{ secrets.PASSWORD }}",
+                    "zonesFollowMaster": true,
+                    "zonesPushMaster": true,
+                    "clientName": "homebridgeQueTest",
+                    "refreshInterval": 60,
+                    "platform": "ActronQue"
+                    }
+                  ]
+                }'
         filename: ./test/.homebridge/config.json
     - run: npm ci
     - run: timeout -k 5s 15s npm run test 
