@@ -35,4 +35,4 @@ jobs:
         json: ${{ secrets.CONFIG_JSON }}
         filename: ./test/.homebridge/config.json
     - run: npm ci
-    - run: cat ./test/.homebridge/config.json
+    - run: timeout -k 5s 15s npm run test 
