@@ -28,7 +28,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: touch ./test/.homebridge/config.json
+    - run: mkdir -p ./test/.homebridge/ && touch ./test/.homebridge/config.json
     - name: json-to-file
       uses: devops-actions/json-to-file@v1.0.0
       with:
