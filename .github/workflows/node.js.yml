@@ -13,7 +13,7 @@ on:
   
 jobs:
   build:
-
+    environment: predeployment
     runs-on: ubuntu-latest
 
     strategy:
@@ -28,6 +28,10 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
+    - name: json-to-file
+      uses: devops-actions/json-to-file@v1.0.0
+      with:
+        json: ${{ secrets.CONFIG_JSON }}
+        filename: ./test/.homebridge/config.json
     - run: npm ci
-    - run: npm run build --if-present
-    - run: npm run watch
+    - run: cat ./test/.homebridge/config.json

@@ -1,6 +1,8 @@
 # Ignore compiled code
 dist
 
+# Ignore test created data
+test/
 # ------------- Defaults ------------- #
 
 # Logs
