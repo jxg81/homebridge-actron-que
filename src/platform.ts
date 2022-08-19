@@ -93,7 +93,8 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
   async discoverDevices() {
     try {
       // Instantiate an instance of HvacUnit and connect the actronQueApi
-      this.hvacInstance = new HvacUnit(this.clientName, this.log, this.zonesFollowMaster, this.zonesPushMaster);
+      this.hvacInstance = new HvacUnit(this.clientName, this.log, this.api.user.storagePath(),
+        this.zonesFollowMaster, this.zonesPushMaster);
       let hvacSerial = '';
       hvacSerial = await this.hvacInstance.actronQueApi(this.username, this.password, this.userProvidedSerialNo);
       // Make sure we have havc master and zone data before adding devices

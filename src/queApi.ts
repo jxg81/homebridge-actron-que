@@ -8,10 +8,10 @@ import { queApiCommands } from './queCommands';
 export default class QueApi {
 
   private readonly basePath: string = 'https://que.actronair.com.au';
-  private readonly persistentDataDir: string = './homebridge-actron-que-persist';
-  private readonly refreshTokenFile: string = './homebridge-actron-que-persist/access.token';
-  private readonly bearerTokenFile: string = './homebridge-actron-que-persist/bearer.token';
-  private readonly apiClientIdFile: string = './homebridge-actron-que-persist/clientid.token';
+  private readonly persistentDataDir: string = this.hbUserStoragePath + '/homebridge-actron-que-persist';
+  private readonly refreshTokenFile: string = this.persistentDataDir + '/access.token';
+  private readonly bearerTokenFile: string = this.persistentDataDir + '/bearer.token';
+  private readonly apiClientIdFile: string = this.persistentDataDir + '/clientid.token';
   private apiClientId: string;
   private commandUrl!: string;
   private queryUrl!: string;
@@ -25,6 +25,7 @@ export default class QueApi {
     private readonly password: string,
     private readonly apiClinetName: string,
     private readonly log: Logger,
+    private readonly hbUserStoragePath: string,
     actronSerial = '',
   ) {
     this.apiClientId = '';
@@ -149,7 +150,7 @@ export default class QueApi {
 
   async initalizer() {
     // intiilisation is done outside of the constructor as we need to 'await' the collection of auth tokens
-    // we also need to await the collection of the device serail number for future API requests.
+    // we also need to await the collection of the device serial number for future API requests.
     await this.tokenGenerator();
     await this.getAcSystems();
     this.commandUrl = `${this.basePath}/api/v0/client/ac-systems/cmds/send?serial=${this.actronSerial}`;
@@ -287,13 +288,13 @@ export default class QueApi {
     if (systemList.length === 1) {
       this.actronSerial = systemList[0]['serial'];
       this.actronSystemId = systemList[0]['id'];
-      this.log.info(`located serail number ${this.actronSerial} with ID of ${this.actronSystemId}`);
+      this.log.info(`located serial number ${this.actronSerial} with ID of ${this.actronSystemId}`);
       // if there is multiple systems make sure the provided serial matches one of the retrieved items
     } else if (systemList.length > 1 && this.actronSerial !== '') {
       for (const system of systemList) {
         if (system['serial'] === this.actronSerial) {
           this.actronSystemId = system['id'];
-          this.log.info(`located serail number ${this.actronSerial} with ID of ${this.actronSystemId}`);
+          this.log.info(`located serial number ${this.actronSerial} with ID of ${this.actronSystemId}`);
         }
       }
       //if there serial cannot be located then we will log an error that serial was not found
