@@ -44,7 +44,7 @@ jobs:
                 "name": "Homebridge Test",
                 "username": "FF:FF:FF:FF:FF:FF",
                 "port": 54321,
-                "pin": "123-45-678",
+                "pin": "123-45-678"
                 },
                 "platforms": [
                     {
