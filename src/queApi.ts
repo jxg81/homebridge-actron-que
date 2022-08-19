@@ -89,7 +89,8 @@ export default class QueApi {
           fetchError.code === 'EHOSTUNREACH' ||
           fetchError.code === 'ETIMEDOUT' ||
           fetchError.code === 'ENETUNREACH' ||
-          fetchError.code === 'ENOTFOUND') {
+          fetchError.code === 'ENOTFOUND' ||
+          fetchError.code === 'EAI_AGAIN') {
         this.log.info('Cannot reach Que cloud service, check your network connection', fetchError.message);
         errorResponse = {apiAccessError: fetchError};
         return errorResponse;
