@@ -77,7 +77,7 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
     }
 
     this.log.debug('Finished initializing platform:', this.config.name);
-
+    this.log.debug('user storge path:', this.api.user.storagePath);
     this.api.on('didFinishLaunching', () => {
       log.debug('Executed didFinishLaunching callback');
       // run the method to discover / register your devices as accessories
