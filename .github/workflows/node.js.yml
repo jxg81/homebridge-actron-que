@@ -68,4 +68,4 @@ jobs:
     - name: Run commit script to test Homebridge integration of plugin - always exits cleanly
       run: timeout --preserve-status -k 60s 30s npm run commit || true
     - name: Check log to confirm   
-      run: cat /var/lib/homebridge/homebridge.log | egrep 'located serail number .{8} with ID of .*'
+      run: cat /var/lib/homebridge/homebridge.log | egrep 'located serial number .{8} with ID of .*'
