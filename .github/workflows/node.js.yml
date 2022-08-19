@@ -56,7 +56,7 @@ jobs:
                     "password": "${{ secrets.PASSWORD }}",
                     "zonesFollowMaster": true,
                     "zonesPushMaster": true,
-                    "clientName": "homebridgeQueTest",
+                    "clientName": "homebridgeQueCommitTest",
                     "refreshInterval": 60,
                     "platform": "ActronQue"
                     }
