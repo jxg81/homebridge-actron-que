@@ -72,6 +72,6 @@ jobs:
     - name: Check log to confirm status retrieved from ActronQue Cloud
       run: cat /var/lib/homebridge/homebridge.log | egrep 'Got current status from Actron Cloud'
     - name: Check log to confirm creation of Actron master controller
-      run: cat /var/lib/homebridge/homebridge.log | egrep 'Adding new accessory. homebridgeQueTest'
+      run: cat /var/lib/homebridge/homebridge.log | egrep 'Adding new accessory. homebridgeQueTest$'
     - name: Check log to confirm creation of Actron outdoor unit
       run: cat /var/lib/homebridge/homebridge.log | egrep 'Adding new accessory. homebridgeQueTest-outdoorUnit'
