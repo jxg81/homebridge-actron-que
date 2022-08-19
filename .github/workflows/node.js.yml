@@ -28,8 +28,14 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: mkdir -p ./test/.homebridge/ && touch ./test/.homebridge/config.json
-    - name: json-to-file
+    - run: mkdir -p /var/lib/homebridge/ && touch /var/lib/homebridge/config.json
+    - run: mkdir -p /var/lib/homebridge/homebridge-actron-que-persist/ && touch /var/lib/homebridge/homebridge-actron-que-persist/clientid.token
+    - name: creating client id file
+      uses: devops-actions/json-to-file@v1.0.0
+      with:
+        json: '[{"name": "homebridgeQueTest", "id": "homebridgeQueTest-12345"}]'
+        filename: /var/lib/homebridge/homebridge-actron-que-persist/clientid.token
+    - name: creating homebridge config file
       uses: devops-actions/json-to-file@v1.0.0
       with:
         json: '{
@@ -38,7 +44,6 @@ jobs:
                 "username": "FF:FF:FF:FF:FF:FF",
                 "port": 54321,
                 "pin": "123-45-678",
-                "advertiser": "avahi"
                 },
                 "platforms": [
                     {
@@ -53,6 +58,6 @@ jobs:
                     }
                   ]
                 }'
-        filename: ./test/.homebridge/config.json
+        filename: /var/lib/homebridge/config.json
     - run: npm ci
-    - run: timeout -k 5s 15s npm run test 
+    - run: timeout -k 5s 30s npm run commit

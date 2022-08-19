@@ -18,10 +18,10 @@
   },
   "main": "dist/index.js",
   "scripts": {
-    "test": "npm run build && npm link && homebridge -P ./dist -I -U ./test/.homebridge",
     "lint": "eslint src/**.ts --max-warnings=0",
     "watch": "npm run build && npm link && nodemon",
     "build": "rimraf ./dist && tsc",
+    "commit": "npm run build && npm link && homebridge -P ./dist -I -U -D /var/lib/homebridge/",
     "prepublishOnly": "npm run lint && npm run build"
   },
   "keywords": [
