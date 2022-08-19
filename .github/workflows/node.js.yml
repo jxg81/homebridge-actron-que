@@ -66,4 +66,4 @@ jobs:
     - name: Clean install npm
       run: npm ci
     - name: Run commit script to test Homebridge integration of plugin
-      run: timeout --preserve-status -k 5s 30s npm run commit
+      run: timeout --preserve-status -k 15s 30s npm run commit
