@@ -77,7 +77,7 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
     }
 
     this.log.debug('Finished initializing platform:', this.config.name);
-    this.log.debug('user storge path:', this.api.user.storagePath());
+
     this.api.on('didFinishLaunching', () => {
       log.debug('Executed didFinishLaunching callback');
       // run the method to discover / register your devices as accessories
@@ -93,7 +93,8 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
   async discoverDevices() {
     try {
       // Instantiate an instance of HvacUnit and connect the actronQueApi
-      this.hvacInstance = new HvacUnit(this.clientName, this.log, this.api.user.storagePath(), this.zonesFollowMaster, this.zonesPushMaster);
+      this.hvacInstance = new HvacUnit(this.clientName, this.log, this.api.user.storagePath(),
+        this.zonesFollowMaster, this.zonesPushMaster);
       let hvacSerial = '';
       hvacSerial = await this.hvacInstance.actronQueApi(this.username, this.password, this.userProvidedSerialNo);
       // Make sure we have havc master and zone data before adding devices
