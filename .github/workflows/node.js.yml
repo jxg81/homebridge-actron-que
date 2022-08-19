@@ -28,8 +28,8 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: mkdir -p /var/lib/homebridge/ && touch /var/lib/homebridge/config.json
-    - run: mkdir -p /var/lib/homebridge/homebridge-actron-que-persist/ && touch /var/lib/homebridge/homebridge-actron-que-persist/clientid.token
+    - run: sudo mkdir -p /var/lib/homebridge/ && sudo touch /var/lib/homebridge/config.json
+    - run: sudo mkdir -p /var/lib/homebridge/homebridge-actron-que-persist/ && sudo touch /var/lib/homebridge/homebridge-actron-que-persist/clientid.token
     - name: creating client id file
       uses: devops-actions/json-to-file@v1.0.0
       with:
