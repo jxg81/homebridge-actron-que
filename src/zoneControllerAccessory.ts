@@ -1,4 +1,4 @@
-import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
+import { Service, PlatformAccessory, CharacteristicValue, HAPStatus } from 'homebridge';
 import { ClimateMode, CompressorMode } from './types';
 import { ActronQuePlatform } from './platform';
 import { HvacZone } from './hvacZone';
@@ -109,6 +109,13 @@ export class ZoneControllerAccessory {
     }
   }
 
+  checkHvacComms() {
+    if (!this.platform.hvacInstance.cloudConnected) {
+      this.platform.log.error('Master Controller is offline. Check Master Controller Internet/Wifi connection');
+      throw new this.platform.api.hap.HapStatusError(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+    }
+  }
+
   getHumidity(): CharacteristicValue {
     const currentHumidity = this.zone.currentHumidity;
     // this.platform.log.debug(`Got Zone ${this.zone.zoneName} Humidity -> `, currentHumidity);
@@ -129,6 +136,7 @@ export class ZoneControllerAccessory {
   }
 
   async setEnableState(value: CharacteristicValue) {
+    this.checkHvacComms();
     switch (value) {
       case 0:
         await this.zone.setZoneDisable();
@@ -172,6 +180,7 @@ export class ZoneControllerAccessory {
   }
 
   async setTargetClimateMode(value: CharacteristicValue) {
+    this.checkHvacComms();
     switch (value) {
       case this.platform.Characteristic.TargetHeaterCoolerState.AUTO:
         await this.platform.hvacInstance.setClimateModeAuto();
@@ -214,6 +223,7 @@ export class ZoneControllerAccessory {
   }
 
   async setHeatingThresholdTemperature(value: CharacteristicValue) {
+    this.checkHvacComms();
     if (this.platform.hvacInstance.zonesPushMaster === true) {
       if (value > this.zone.maxHeatSetPoint) {
         await this.platform.hvacInstance.setHeatTemp(value as number);
@@ -239,6 +249,7 @@ export class ZoneControllerAccessory {
   }
 
   async setCoolingThresholdTemperature(value: CharacteristicValue) {
+    this.checkHvacComms();
     if (this.platform.hvacInstance.zonesPushMaster === true) {
       if (value > this.zone.maxCoolSetPoint) {
         await this.platform.hvacInstance.setCoolTemp(value as number + 2);

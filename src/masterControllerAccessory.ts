@@ -1,4 +1,4 @@
-import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
+import { Service, PlatformAccessory, CharacteristicValue, HAPStatus } from 'homebridge';
 import { ClimateMode, CompressorMode, FanMode, PowerState } from './types';
 import { ActronQuePlatform } from './platform';
 
@@ -107,6 +107,13 @@ export class MasterControllerAccessory {
     this.humidityService.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.getHumidity());
   }
 
+  checkHvacComms() {
+    if (!this.platform.hvacInstance.cloudConnected) {
+      this.platform.log.error('Master Controller is offline. Check Master Controller Internet/Wifi connection');
+      throw new this.platform.api.hap.HapStatusError(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+    }
+  }
+
   getHumidity(): CharacteristicValue {
     const currentHumidity = this.platform.hvacInstance.masterHumidity;
     // this.platform.log.debug('Got Master Humidity -> ', currentHumidity);
@@ -114,6 +121,7 @@ export class MasterControllerAccessory {
   }
 
   async setPowerState(value: CharacteristicValue) {
+    this.checkHvacComms();
     switch (value) {
       case 0:
         await this.platform.hvacInstance.setPowerStateOff();
@@ -157,6 +165,7 @@ export class MasterControllerAccessory {
   }
 
   async setTargetClimateMode(value: CharacteristicValue) {
+    this.checkHvacComms();
     switch (value) {
       case this.platform.Characteristic.TargetHeaterCoolerState.AUTO:
         await this.platform.hvacInstance.setClimateModeAuto();
@@ -201,6 +210,7 @@ export class MasterControllerAccessory {
   }
 
   async setHeatingThresholdTemperature(value: CharacteristicValue) {
+    this.checkHvacComms();
     if (this.platform.hvacInstance.controlAllZones === false &&
       this.platform.hvacInstance.zonesFollowMaster === true) {
       await this.platform.hvacInstance.setControlAllZonesOn();
@@ -217,6 +227,7 @@ export class MasterControllerAccessory {
   }
 
   async setCoolingThresholdTemperature(value: CharacteristicValue) {
+    this.checkHvacComms();
     if (this.platform.hvacInstance.controlAllZones === false &&
       this.platform.hvacInstance.zonesFollowMaster === true) {
       await this.platform.hvacInstance.setControlAllZonesOn();
@@ -233,6 +244,7 @@ export class MasterControllerAccessory {
   }
 
   async setFanMode(value: CharacteristicValue) {
+    this.checkHvacComms();
     switch (true) {
       case (value <= 30):
         await this.platform.hvacInstance.setFanModeLow();
