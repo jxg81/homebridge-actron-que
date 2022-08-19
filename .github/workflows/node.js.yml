@@ -30,7 +30,7 @@ jobs:
         cache: 'npm'
     - run: sudo mkdir -p /var/lib/homebridge/ && sudo mkdir -p /var/lib/homebridge/homebridge-actron-que-persist/
     - run: sudo touch /var/lib/homebridge/config.json && sudo touch /var/lib/homebridge/homebridge-actron-que-persist/clientid.token
-    - run: sudo chmod -R 0777 /var/lib/homebridge/homebridge-actron-que-persist/ && sudo chmod -R 0777 /var/lib/homebridge/homebridge-actron-que-persist/
+    - run: sudo chmod -R 0777 /var/lib/homebridge/ && sudo chmod -R 0777 /var/lib/homebridge/homebridge-actron-que-persist/
     - name: creating client id file
       uses: devops-actions/json-to-file@v1.0.0
       with:
