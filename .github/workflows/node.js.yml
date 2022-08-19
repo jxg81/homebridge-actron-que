@@ -74,8 +74,8 @@ jobs:
     - name: Check log to confirm no API error
       run: cat /var/lib/homebridge/homebridge.log | egrep '{"apiError":false,'
     - name: Check log to confirm creation of Actron master controller
-      run: cat /var/lib/homebridge/homebridge.log | egrep 'Adding new accessory. homebridgeQueTest$'
+      run: cat /var/lib/homebridge/homebridge.log | egrep 'Adding new accessory. homebridgeQueCommitTest$'
     - name: Check log to confirm creation of Actron outdoor unit
-      run: cat /var/lib/homebridge/homebridge.log | egrep 'Adding new accessory. homebridgeQueTest-outdoorUnit'
+      run: cat /var/lib/homebridge/homebridge.log | egrep 'Adding new accessory. homebridgeQueCommitTest-outdoorUnit'
     - run: ls -la /var/lib/homebridge/
     - run: ls -la /var/lib/homebridge/homebridge-actron-que-persist/
