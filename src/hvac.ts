@@ -28,13 +28,17 @@ export class HvacUnit {
   zoneData: ZoneStatus[] = [];
   zoneInstances: HvacZone[] = [];
 
-  constructor(name: string, private readonly log: Logger, readonly zonesFollowMaster = true, readonly zonesPushMaster = true) {
+  constructor(name: string,
+     private readonly log: Logger,
+     private readonly hbUserStoragePath: string,
+     readonly zonesFollowMaster = true,
+    readonly zonesPushMaster = true) {
     this.name = name;
   }
 
   async actronQueApi(username: string, password: string, serialNo = '') {
     this.type = 'actronQue';
-    this.apiInterface = new QueApi(username, password, this.name, this.log, serialNo);
+    this.apiInterface = new QueApi(username, password, this.name, this.log, this.hbUserStoragePath, serialNo);
     await this.apiInterface.initalizer();
     if (this.apiInterface.actronSerial) {
       this.serialNo = this.apiInterface.actronSerial;

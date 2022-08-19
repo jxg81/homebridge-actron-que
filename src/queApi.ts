@@ -8,10 +8,10 @@ import { queApiCommands } from './queCommands';
 export default class QueApi {
 
   private readonly basePath: string = 'https://que.actronair.com.au';
-  private readonly persistentDataDir: string = './homebridge-actron-que-persist';
-  private readonly refreshTokenFile: string = './homebridge-actron-que-persist/access.token';
-  private readonly bearerTokenFile: string = './homebridge-actron-que-persist/bearer.token';
-  private readonly apiClientIdFile: string = './homebridge-actron-que-persist/clientid.token';
+  private readonly persistentDataDir: string = this.hbUserStoragePath + '/homebridge-actron-que-persist';
+  private readonly refreshTokenFile: string = this.persistentDataDir + '/access.token';
+  private readonly bearerTokenFile: string = this.persistentDataDir + '/bearer.token';
+  private readonly apiClientIdFile: string = this.persistentDataDir + '/clientid.token';
   private apiClientId: string;
   private commandUrl!: string;
   private queryUrl!: string;
@@ -25,6 +25,7 @@ export default class QueApi {
     private readonly password: string,
     private readonly apiClinetName: string,
     private readonly log: Logger,
+    private readonly hbUserStoragePath: string,
     actronSerial = '',
   ) {
     this.apiClientId = '';
