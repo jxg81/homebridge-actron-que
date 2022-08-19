@@ -71,5 +71,4 @@ jobs:
     #  run: cat /var/lib/homebridge/homebridge.log | egrep 'located serial number .{8} with ID of .*'
     - run: ls -la
     - run: ls -la /var/lib/homebridge/
-    - run: ls -la ~/.homebridge/
     - run: sudo find / -name homebridge.log
