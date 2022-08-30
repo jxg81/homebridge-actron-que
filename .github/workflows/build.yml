@@ -66,7 +66,7 @@ jobs:
     - name: Clean install npm
       run: npm ci
     - name: Run commit script to test Homebridge integration of plugin - always exits cleanly
-      run: timeout --preserve-status -k 120s 60s npm run commit || true
+      run: timeout --preserve-status -k 120s 120s npm run commit || true
     - name: Check log to confirm login to ActronQue Cloud
       run: cat /var/lib/homebridge/homebridge.log | egrep 'located serial number .{8} with ID of .*'
     - name: Check log to confirm status retrieved from ActronQue Cloud
