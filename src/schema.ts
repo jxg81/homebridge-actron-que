@@ -15,9 +15,6 @@ export const SystemStatusSchema: Schema = {
             CanRunSystem: {
               type: 'boolean',
             },
-            CoilInlet: {
-              type: 'float64',
-            },
             CompressorCanRun: {
               type: 'boolean',
             },
@@ -33,28 +30,10 @@ export const SystemStatusSchema: Schema = {
             CompressorMode: {
               type: 'string',
             },
-            Defrost: {
-              type: 'boolean',
-            },
-            DraftRecutionInfo: {
-              type: 'string',
-            },
-            FanDemandPC: {
-              type: 'uint8',
-            },
-            FanPWM: {
-              type: 'uint8',
-            },
-            FanRPM: {
-              type: 'uint16',
-            },
             IndoorUnitTemp: {
               type: 'float64',
             },
-            LastCompressorModeChange: {
-              type: 'string',
-            },
-            LastCompressorPowerChang: {
+            LastCompressorPowerChange: {
               type: 'string',
             },
             LastCompressorPowerChange_time: {
@@ -65,14 +44,8 @@ export const SystemStatusSchema: Schema = {
                 AmbTemp: {
                   type: 'float64',
                 },
-                AmbientSensErr: {
-                  type: 'boolean',
-                },
                 AutoMode: {
                   type: 'uint8',
-                },
-                CoilSenseErr: {
-                  type: 'boolean',
                 },
                 CoilTemp: {
                   type: 'float64',
@@ -83,26 +56,11 @@ export const SystemStatusSchema: Schema = {
                 CompMustRunON: {
                   type: 'boolean',
                 },
-                CompPower: {
-                  type: 'uint16',
-                },
-                CompRunningPWM: {
-                  type: 'uint8',
-                },
-                CompSpeed: {
-                  type: 'float64',
-                },
                 CompressorMode: {
                   type: 'uint8',
                 },
                 CompressorOn: {
                   type: 'boolean',
-                },
-                CompressorSetSpeed: {
-                  type: 'uint8',
-                },
-                CondPc: {
-                  type: 'float64',
                 },
                 ContFan: {
                   type: 'boolean',
@@ -115,12 +73,6 @@ export const SystemStatusSchema: Schema = {
                 },
                 FanSpeed: {
                   type: 'float64',
-                },
-                Mode: {
-                  type: 'uint8',
-                },
-                ODFan: {
-                  type: 'uint8',
                 },
               },
               additionalProperties: true,

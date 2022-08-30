@@ -154,7 +154,6 @@ export default class QueApi {
     const valid: boolean = (schemaValidation.length === 0) ? true : false;
     if (!valid) {
       this.log.error('Invalid data in API response', schemaValidation);
-      this.log.error('Respoonse data ');
     }
     return valid;
   }
