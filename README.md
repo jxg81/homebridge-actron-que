@@ -26,6 +26,19 @@ This is an 'almost' feature complete implementation of the Que platfrom in HomeK
  - Report battery level on zone sensors and get low battery alerts in the home app
  - Support for homebridge config UI
 
+Fixes/Improvements in version 1.2.3
+ - Resolve intermitent crash on device status refresh -> `https://github.com/jxg81/homebridge-actron-que/issues/3`
+ - Implemented JSON Typedef schema validation for all Que API responses
+
+New in version 1.2.2
+ - NOW HOMEBRIDGE VERIFIED - No functional changes
+
+Improvements in version 1.2.1
+ - Homekit will now show 'No response' for devices if master controller is not connected to the Internet
+ - Explicit log message in Homebridge instructing to check the master controller wifi if disconnected from the Internet
+ - Better handling and recovery of network error states
+ - CI/CD implementation to improve code quality visibility
+
 New in version 1.2.0
  - Device state will now show as idle when heating/cooling temp achieved and fan is not running
 
