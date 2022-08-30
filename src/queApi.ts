@@ -150,6 +150,9 @@ export default class QueApi {
   }
 
   private async validateSchema(schema: Schema, data: object): Promise<boolean> {
+    if ('apiAccessError' in data) {
+      return false;
+    }
     const schemaValidation: unknown[] = validate(schema, data);
     const valid: boolean = (schemaValidation.length === 0) ? true : false;
     if (!valid) {
@@ -248,7 +251,7 @@ export default class QueApi {
     const expiresAt: number = Date.now() + (response['expires_in'] * 1000 ) - 300;
     this.bearerToken = {expires: expiresAt, token: response['access_token']};
     fs.writeFile(this.bearerTokenFile, JSON.stringify(this.bearerToken), error => {
-      if (error){
+      if (error) {
         if (error instanceof Error) {
           this.log.error(error.message);
           return this.bearerToken;
