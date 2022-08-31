@@ -157,7 +157,7 @@ export default class QueApi {
     const valid: boolean = (schemaValidation.length === 0) ? true : false;
     if (!valid) {
       this.log.debug('Invalid schema for API respoonse', schemaValidation);
-      this.log.error('API returned following data resulting in schema validation error:\n', data);
+      this.log.error('API returned following data resulting in schema validation error:\n', JSON.stringify(data));
     }
     return valid;
   }
@@ -444,7 +444,7 @@ export default class QueApi {
     }
 
     if ('apiAccessError' in response || !valid_response) {
-      this.log.debug(`API Error when attempting command send:\n ${JSON.stringify(command)}`);
+      this.log.error(`API Error when attempting command send:\n ${JSON.stringify(command)}`);
       return CommandResult.API_ERROR;
     } else if (response['type'] === 'ack') {
       this.log.debug(`Command sucessful, 'ack' recieved from Actron Cloud:\n ${JSON.stringify(response['value'])}`);
