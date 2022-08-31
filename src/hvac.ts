@@ -53,7 +53,7 @@ export class HvacUnit {
     const status = await this.apiInterface.getStatus();
 
     if (status.apiError) {
-      this.log.info('Failed to refresh status, Actron Que Cloud unreachable');
+      this.log.info('Failed to refresh status, Actron Que Cloud unreachable or returned invalid data');
       return status;
     }
 
