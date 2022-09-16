@@ -53,7 +53,7 @@ export class HvacUnit {
     const status = await this.apiInterface.getStatus();
 
     if (status.apiError) {
-      this.log.info('Failed to refresh status, Actron Que Cloud unreachable or returned invalid data');
+      this.log.warn('Failed to refresh status, Actron Que Cloud unreachable or returned invalid data');
       return status;
     }
 
@@ -103,7 +103,7 @@ export class HvacUnit {
         await this.getStatus();
         this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
       } else {
-        this.log.info('Failed to send command, Actron Que Cloud unreachable');
+        this.log.warn('Failed to send command, Actron Que Cloud unreachable');
       }
     }
     return this.powerState;
@@ -123,7 +123,7 @@ export class HvacUnit {
         await this.getStatus();
         this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
       } else {
-        this.log.info('Failed to send command, Actron Que Cloud unreachable');
+        this.log.warn('Failed to send command, Actron Que Cloud unreachable');
       }
     }
     return this.powerState;
@@ -138,7 +138,7 @@ export class HvacUnit {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
     } else {
-      this.log.info('Failed to send command, Actron Que Cloud unreachable');
+      this.log.warn('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.masterHeatingSetTemp;
   }
@@ -152,7 +152,7 @@ export class HvacUnit {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
     } else {
-      this.log.info('Failed to send command, Actron Que Cloud unreachable');
+      this.log.warn('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.masterCoolingSetTemp;
   }
@@ -167,7 +167,7 @@ export class HvacUnit {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
     } else {
-      this.log.info('Failed to send command, Actron Que Cloud unreachable');
+      this.log.warn('Failed to send command, Actron Que Cloud unreachable');
     }
     return [this.masterCoolingSetTemp, this.masterHeatingSetTemp=heatTemp];
   }
@@ -180,7 +180,7 @@ export class HvacUnit {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
     } else {
-      this.log.info('Failed to send command, Actron Que Cloud unreachable');
+      this.log.warn('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.climateMode;
   }
@@ -193,7 +193,7 @@ export class HvacUnit {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
     } else {
-      this.log.info('Failed to send command, Actron Que Cloud unreachable');
+      this.log.warn('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.climateMode;
   }
@@ -206,7 +206,7 @@ export class HvacUnit {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
     } else {
-      this.log.info('Failed to send command, Actron Que Cloud unreachable');
+      this.log.warn('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.climateMode;
   }
@@ -219,7 +219,7 @@ export class HvacUnit {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
     } else {
-      this.log.info('Failed to send command, Actron Que Cloud unreachable');
+      this.log.warn('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.climateMode;
   }
@@ -232,7 +232,7 @@ export class HvacUnit {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
     } else {
-      this.log.info('Failed to send command, Actron Que Cloud unreachable');
+      this.log.warn('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.fanMode;
   }
@@ -245,7 +245,7 @@ export class HvacUnit {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
     } else {
-      this.log.info('Failed to send command, Actron Que Cloud unreachable');
+      this.log.warn('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.fanMode;
   }
@@ -258,7 +258,7 @@ export class HvacUnit {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
     } else {
-      this.log.info('Failed to send command, Actron Que Cloud unreachable');
+      this.log.warn('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.fanMode;
   }
@@ -271,7 +271,7 @@ export class HvacUnit {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
     } else {
-      this.log.info('Failed to send command, Actron Que Cloud unreachable');
+      this.log.warn('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.fanMode;
   }
@@ -284,7 +284,7 @@ export class HvacUnit {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
     } else {
-      this.log.info('Failed to send command, Actron Que Cloud unreachable');
+      this.log.warn('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.awayMode;
   }
@@ -297,7 +297,7 @@ export class HvacUnit {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
     } else {
-      this.log.info('Failed to send command, Actron Que Cloud unreachable');
+      this.log.warn('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.awayMode;
   }
@@ -310,7 +310,7 @@ export class HvacUnit {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
     } else {
-      this.log.info('Failed to send command, Actron Que Cloud unreachable');
+      this.log.warn('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.quietMode;
   }
@@ -323,7 +323,7 @@ export class HvacUnit {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
     } else {
-      this.log.info('Failed to send command, Actron Que Cloud unreachable');
+      this.log.warn('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.quietMode;
   }
@@ -336,7 +336,7 @@ export class HvacUnit {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
     } else {
-      this.log.info('Failed to send command, Actron Que Cloud unreachable');
+      this.log.warn('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.controlAllZones;
   }
@@ -349,7 +349,7 @@ export class HvacUnit {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
     } else {
-      this.log.info('Failed to send command, Actron Que Cloud unreachable');
+      this.log.warn('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.controlAllZones;
   }

@@ -91,7 +91,7 @@ export default class QueApi {
           fetchError.code === 'ENETUNREACH' ||
           fetchError.code === 'ENOTFOUND' ||
           fetchError.code === 'EAI_AGAIN') {
-        this.log.info('Cannot reach Que cloud service, check your network connection', fetchError.message);
+        this.log.warn('Cannot reach Que cloud service, check your network connection', fetchError.message);
         errorResponse = {apiAccessError: fetchError};
         return errorResponse;
       } else {
@@ -136,7 +136,7 @@ export default class QueApi {
           return this.manageApiRequest(requestContent, retries -1);
         } else {
           const serverError = new Error(`Actron Que API returned a server side error: http status code = ${response.status}`);
-          this.log.info('Maximum retries exceeded ->', serverError.message);
+          this.log.error('Maximum retries exceeded ->', serverError.message);
           errorResponse = {apiAccessError: serverError};
           return errorResponse;
         }
@@ -156,8 +156,9 @@ export default class QueApi {
     const schemaValidation: unknown[] = validate(schema, data);
     const valid: boolean = (schemaValidation.length === 0) ? true : false;
     if (!valid) {
+      this.log.warn('API Returned Bad Data - Schema Validation Failed');
       this.log.debug('Invalid schema for API respoonse', schemaValidation);
-      this.log.error('API returned following data resulting in schema validation error:\n', JSON.stringify(data));
+      this.log.debug('API returned following data resulting in schema validation error:\n', JSON.stringify(data));
     }
     return valid;
   }
