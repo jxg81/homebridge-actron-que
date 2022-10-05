@@ -125,10 +125,10 @@ export const SystemStatusSchema: Schema = {
                 type: 'string',
               },
               TemperatureSetpoint_Cool_oC: {
-                type: 'uint8',
+                type: 'float64',
               },
               TemperatureSetpoint_Heat_oC: {
-                type: 'uint8',
+                type: 'float64',
               },
               ZonePosition: {
                 type: 'uint8',
@@ -162,10 +162,10 @@ export const SystemStatusSchema: Schema = {
               type: 'boolean',
             },
             TemperatureSetpoint_Cool_oC: {
-              type: 'uint8',
+              type: 'float64',
             },
             TemperatureSetpoint_Heat_oC: {
-              type: 'uint8',
+              type: 'float64',
             },
             isFastHeating: {
               type: 'boolean',
