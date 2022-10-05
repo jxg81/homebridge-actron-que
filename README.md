@@ -26,6 +26,20 @@ This is an 'almost' feature complete implementation of the Que platfrom in HomeK
  - Report battery level on zone sensors and get low battery alerts in the home app
  - Support for homebridge config UI
 
+Fixes/Improvements in version 1.2.3
+ - Resolve intermitent crash on device status refresh -> `https://github.com/jxg81/homebridge-actron-que/issues/3`
+ - Implemented JSON Typedef schema validation for all Que API responses, see [Schema Validation Errors](#schema-validation-errors)
+ - Improved classification of homebridge log messages (Info, Error, Warning, Debug)
+
+New in version 1.2.2
+ - NOW HOMEBRIDGE VERIFIED - No functional changes
+
+Improvements in version 1.2.1
+ - Homekit will now show 'No response' for devices if master controller is not connected to the Internet
+ - Explicit log message in Homebridge instructing to check the master controller wifi if disconnected from the Internet
+ - Better handling and recovery of network error states
+ - CI/CD implementation to improve code quality visibility
+
 New in version 1.2.0
  - Device state will now show as idle when heating/cooling temp achieved and fan is not running
 
@@ -184,7 +198,7 @@ During development of the plugin I noticed that the Que API occasionally fails t
 
 Generally these errors will resolve after time and things will keep on running. From version 1.1.0 this error handling was imporved to prevent the plugin terminating and allow for a graceful recovery once the Que API starts responding normally again.
 
-### All other non-200
+#### All other non-200
 ---
 All other errors will fall through to a default handler that will return the following Error in the Homebridge log. As before, persistent auth data will be flushed to allow for a clean restart.
 
@@ -195,3 +209,23 @@ All other errors will fall through to a default handler that will return the fol
 Begining with version 1.1.0 the plugin will now gracefully recover from network outages. The network MUST be available on startup, but if there is an outage during operation you will see the following Info message in the log and the plugin will resume functioning once the network is restored. 
 
 `Cannot reach Que cloud service, check your network connection <specific error condition>`
+
+### Master Controller Offline
+Begining with 1.2.3 the plugin will now detect if your master controller is diconnected from the network or otherwise unable to reach the Que Cloud Service. You will be alterted to this via the following log message:
+
+`Master Controller is offline. Check Master Controller Internet/Wifi connection`
+
+And / Or:
+
+`Master Controller is offline. Check Master Controller Internet/Wifi connection`  
+`Refreshing HomeKit accessory state using cached data`
+### Schema Validation Errors
+Beginning with version 1.2.3 the plugin will now gracefully recover when the API returns data that does not meet the schema validation requirements. This has been implemented as it was obeserved that the API will at times return a valid HTTP respose, but the JSON paylaod contains incomplete data (I assume that this is a resource scaling issue on Actron's end). 
+
+`API Returned Bad Data - Schema Validation Failed`
+
+### State Refresh from Cache on Error
+If errors occur during the periodic state refresh interval (poll to Actron cloud to ensure Homebridge has up to date device data) then you may see one or both of the following warning messages appear in the event log. This is simply to make you aware that the Actron cloud service is returning bad or error data however cached info will be used for the state refresh to allow operation to connue gracefully. From experience I have observed that the Actron service will expereince issues most days and may return bad data for up to 10mins before returning to reliable operation. I am working on a project to start logging the availability of thier cloud service so i can provide infomration to thier support team to hompefully resolve these on-going issues.
+
+`Failed to refresh status, Actron Que Cloud unreachable or returned invalid data`  
+`Actron Que cloud error, refreshing HomeKit accessory state using cached data`

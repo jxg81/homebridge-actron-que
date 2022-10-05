@@ -1,7 +1,9 @@
 import * as fs from 'fs';
 import fetch, { Request, Response, FetchError } from 'node-fetch';
-import { apiToken, tokenCollection, PowerState, validApiCommands, ZoneStatus, HvacStatus, CommandResult, ApiAccessError } from './types';
 import { Logger } from 'homebridge';
+import { Schema, validate } from 'jtd';
+import { apiToken, tokenCollection, PowerState, validApiCommands, ZoneStatus, HvacStatus, CommandResult, ApiAccessError } from './types';
+import { AccessTokenSchema, BearerTokenSchema, SystemStatusSchema, AcSystemsSchema, CommandResponseSchema} from './schema';
 import { queApiCommands } from './queCommands';
 
 // Defines an api interface for the Que cloud service
@@ -12,6 +14,7 @@ export default class QueApi {
   private readonly refreshTokenFile: string = this.persistentDataDir + '/access.token';
   private readonly bearerTokenFile: string = this.persistentDataDir + '/bearer.token';
   private readonly apiClientIdFile: string = this.persistentDataDir + '/clientid.token';
+
   private apiClientId: string;
   private commandUrl!: string;
   private queryUrl!: string;
@@ -79,10 +82,7 @@ export default class QueApi {
     let errorResponse: ApiAccessError;
     try {
       response = await fetch(requestContent);
-    // This error block will allow for around one day of retries if there is a network related failing.
-    // this doesnt work well if things are already running and net drops, as new requests keep queuing
-    // need a blocking method or enable value return that can be managed downstream while logging error
-    // What i want to do here is cleanly exit the request, log an erorr, and manage the downstream impacts graecfully
+    // Gracefully log and report errors for network outages in a recoverable fashion
     } catch (error) {
       const fetchError = error as FetchError;
       if (fetchError.code === 'EHOSTDOWN' ||
@@ -91,7 +91,7 @@ export default class QueApi {
           fetchError.code === 'ENETUNREACH' ||
           fetchError.code === 'ENOTFOUND' ||
           fetchError.code === 'EAI_AGAIN') {
-        this.log.info('Cannot reach Que cloud service, check your network connection', fetchError.message);
+        this.log.warn('Cannot reach Que cloud service, check your network connection', fetchError.message);
         errorResponse = {apiAccessError: fetchError};
         return errorResponse;
       } else {
@@ -136,7 +136,7 @@ export default class QueApi {
           return this.manageApiRequest(requestContent, retries -1);
         } else {
           const serverError = new Error(`Actron Que API returned a server side error: http status code = ${response.status}`);
-          this.log.info('Maximum retries exceeded ->', serverError.message);
+          this.log.error('Maximum retries exceeded ->', serverError.message);
           errorResponse = {apiAccessError: serverError};
           return errorResponse;
         }
@@ -147,6 +147,20 @@ export default class QueApi {
         throw Error(`An unhandled error has occured: http status code = ${response.status}\n
         If you recently revoked access for clients on the Que portal, a restart may resolve the issue`);
     }
+  }
+
+  private async validateSchema(schema: Schema, data: object): Promise<boolean> {
+    if ('apiAccessError' in data) {
+      return false;
+    }
+    const schemaValidation: unknown[] = validate(schema, data);
+    const valid: boolean = (schemaValidation.length === 0) ? true : false;
+    if (!valid) {
+      this.log.warn('API Returned Bad Data - Schema Validation Failed');
+      this.log.debug('Invalid schema for API respoonse', schemaValidation);
+      this.log.debug('API returned following data resulting in schema validation error:\n', JSON.stringify(data));
+    }
+    return valid;
   }
 
   async initalizer() {
@@ -181,15 +195,17 @@ export default class QueApi {
     });
     // this is wrapped in a try/catch to help identify potential user/pass related errors
     let response: object = {};
+    let valid_response = false;
     try {
       response = await this.manageApiRequest(preparedRequest);
+      valid_response = await this.validateSchema(AccessTokenSchema, response);
     } catch (error) {
       if (error instanceof Error) {
         this.log.error(error.message);
         return this.refreshToken;
       }
     }
-    if ('apiAccessError' in response) {
+    if ('apiAccessError' in response || !valid_response) {
       return this.refreshToken;
     }
     this.refreshToken = {expires: Date.parse(response['expires']), token: response['pairingToken']};
@@ -221,21 +237,23 @@ export default class QueApi {
     });
     // Avoiding the writing of bad data to the bearer token file by catching errors
     let response: object = {};
+    let valid_response = false;
     try {
       response = await this.manageApiRequest(preparedRequest);
+      valid_response = await this.validateSchema(BearerTokenSchema, response);
     } catch (error) {
       if (error instanceof Error) {
         this.log.error(error.message);
         return this.bearerToken;
       }
     }
-    if ('apiAccessError' in response) {
+    if ('apiAccessError' in response || !valid_response) {
       return this.bearerToken;
     }
     const expiresAt: number = Date.now() + (response['expires_in'] * 1000 ) - 300;
     this.bearerToken = {expires: expiresAt, token: response['access_token']};
     fs.writeFile(this.bearerTokenFile, JSON.stringify(this.bearerToken), error => {
-      if (error){
+      if (error) {
         if (error instanceof Error) {
           this.log.error(error.message);
           return this.bearerToken;
@@ -273,15 +291,17 @@ export default class QueApi {
     });
     // Killing intialisation and throwing errors if we cant get the AC serial number
     let response: object = {};
+    let valid_response = false;
     try {
       response = await this.manageApiRequest(preparedRequest);
+      valid_response = await this.validateSchema(AcSystemsSchema, response);
     } catch (error) {
       if (error instanceof Error) {
         this.log.error(error.message);
         throw Error(error.message);
       }
     }
-    if ('apiAccessError' in response) {
+    if ('apiAccessError' in response || !valid_response) {
       throw Error('Couldnt reach Actron Que Cloud to retrieve system list and intialise plugin');
     }
     const systemList: object[] = response['_embedded']['ac-system'];
@@ -311,9 +331,19 @@ export default class QueApi {
       headers: {'Authorization': `Bearer ${this.bearerToken.token}`, 'Accept': 'application/json'},
     });
 
-    const response = await this.manageApiRequest(preparedRequest);
+    let response: object = {};
+    let valid_response = false;
+    try {
+      response = await this.manageApiRequest(preparedRequest);
+      valid_response = await this.validateSchema(SystemStatusSchema, response);
+    } catch (error) {
+      if (error instanceof Error) {
+        this.log.error(error.message);
+        // decided not to throw error in this case to see if we can silently recover
+      }
+    }
 
-    if ('apiAccessError' in response) {
+    if ('apiAccessError' in response || !valid_response) {
       const currentStatus: HvacStatus = {apiError: true, zoneCurrentStatus: []};
       return currentStatus;
     }
@@ -401,10 +431,21 @@ export default class QueApi {
       headers: {'Authorization': `Bearer ${this.bearerToken.token}`, 'Content-Type': 'application/json'},
       body: JSON.stringify(command),
     });
-    const response = await this.manageApiRequest(preparedRequest);
 
-    if ('apiAccessError' in response) {
-      this.log.debug(`API Error when attempting command send:\n ${JSON.stringify(command)}`);
+    let response: object = {};
+    let valid_response = false;
+    try {
+      response = await this.manageApiRequest(preparedRequest);
+      valid_response = await this.validateSchema(CommandResponseSchema, response);
+    } catch (error) {
+      if (error instanceof Error) {
+        this.log.error(error.message);
+        // decided not to throw error in this case to see if we can silently recover
+      }
+    }
+
+    if ('apiAccessError' in response || !valid_response) {
+      this.log.error(`API Error when attempting command send:\n ${JSON.stringify(command)}`);
       return CommandResult.API_ERROR;
     } else if (response['type'] === 'ack') {
       this.log.debug(`Command sucessful, 'ack' recieved from Actron Cloud:\n ${JSON.stringify(response['value'])}`);

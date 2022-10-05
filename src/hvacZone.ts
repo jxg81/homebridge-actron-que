@@ -63,7 +63,7 @@ export class HvacZone {
   async getZoneStatus() {
     const refreshState = await this.apiInterface.getStatus();
     if (refreshState.apiError) {
-      this.log.info('Failed to refresh status, Actron Que Cloud unreachable');
+      this.log.warn('Failed to refresh status, Actron Que Cloud unreachable');
       return refreshState;
     }
     const targetInstance = refreshState.zoneCurrentStatus.find(zoneInstance => zoneInstance.sensorId === this.sensorId) as ZoneStatus;
@@ -78,9 +78,9 @@ export class HvacZone {
       this.zoneEnabled=true;
     } else if (response === CommandResult.FAILURE) {
       await this.getZoneStatus();
-      this.log.debug(`Failed to set zone ${this.zoneIndex}, ${this.zoneName}, refreshing zone state from API`);
+      this.log.error(`Failed to set zone ${this.zoneIndex}, ${this.zoneName}, refreshing zone state from API`);
     } else {
-      this.log.info('Failed to send command, Actron Que Cloud unreachable');
+      this.log.warn('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.zoneEnabled;
   }
@@ -93,9 +93,9 @@ export class HvacZone {
       this.zoneEnabled=false;
     } else if (response === CommandResult.FAILURE) {
       await this.getZoneStatus();
-      this.log.debug(`Failed to set zone ${this.zoneIndex}, ${this.zoneName}, refreshing zone state from API`);
+      this.log.error(`Failed to set zone ${this.zoneIndex}, ${this.zoneName}, refreshing zone state from API`);
     } else {
-      this.log.info('Failed to send command, Actron Que Cloud unreachable');
+      this.log.warn('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.zoneEnabled;
   }
@@ -107,9 +107,9 @@ export class HvacZone {
       this.currentHeatingSetTemp=heatTemp;
     } else if (response === CommandResult.FAILURE) {
       await this.getZoneStatus();
-      this.log.debug(`Failed to set zone ${this.zoneIndex}, ${this.zoneName}, refreshing zone state from API`);
+      this.log.error(`Failed to set zone ${this.zoneIndex}, ${this.zoneName}, refreshing zone state from API`);
     } else {
-      this.log.info('Failed to send command, Actron Que Cloud unreachable');
+      this.log.warn('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.currentHeatingSetTemp;
   }
@@ -121,9 +121,9 @@ export class HvacZone {
       this.currentCoolingSetTemp=coolTemp;
     } else if (response === CommandResult.FAILURE) {
       await this.getZoneStatus();
-      this.log.debug(`Failed to set zone ${this.zoneIndex}, ${this.zoneName}, refreshing zone state from API`);
+      this.log.error(`Failed to set zone ${this.zoneIndex}, ${this.zoneName}, refreshing zone state from API`);
     } else {
-      this.log.info('Failed to send command, Actron Que Cloud unreachable');
+      this.log.warn('Failed to send command, Actron Que Cloud unreachable');
     }
     return this.currentCoolingSetTemp;
   }
