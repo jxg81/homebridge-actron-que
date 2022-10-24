@@ -82,7 +82,7 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
       this.minHeatingTemp = config['minHeatingTemp'];
       this.log.debug('Heating threshold min set to', this.minHeatingTemp);
     } else {
-      this.minHeatingTemp = 26;
+      this.minHeatingTemp = 10;
     }
 
     // Check Required Config Fields
