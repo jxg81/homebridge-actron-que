@@ -2,7 +2,7 @@ import { Service, PlatformAccessory, CharacteristicValue, HAPStatus } from 'home
 import { ClimateMode, CompressorMode, FanMode, PowerState } from './types';
 import { ActronQuePlatform } from './platform';
 
-// This class represents the master controller, a seperate class is used for representing zones (or will be once i write it)
+// This class represents the master controller, a separate class is used for representing zones (or will be once i write it)
 export class MasterControllerAccessory {
   private hvacService: Service;
   private humidityService: Service;
@@ -25,7 +25,7 @@ export class MasterControllerAccessory {
     this.humidityService = this.accessory.getService(this.platform.Service.HumiditySensor)
     || this.accessory.addService(this.platform.Service.HumiditySensor);
 
-    // Set accesory display name, this is taken from discover devices in platform
+    // Set accessory display name, this is taken from discover devices in platform
     this.hvacService.setCharacteristic(this.platform.Characteristic.Name, accessory.displayName);
 
     // get humidity
@@ -67,21 +67,21 @@ export class MasterControllerAccessory {
       .onGet(this.getCoolingThresholdTemperature.bind(this))
       .onSet(this.setCoolingThresholdTemperature.bind(this));
 
-    // This currently does not allow for continous fan mode at any of the speed options.
-    // Setting fan mode to 0 seems to automatically trigger a power off (even though i dont request that)
+    // This currently does not allow for continuos fan mode at any of the speed options.
+    // Setting fan mode to 0 seems to automatically trigger a power off (even though i don't request that)
     // having some trouble with range of 0-4, cant seem to set slider to 4, only gets to 3
     // need to revisit this
     this.hvacService.getCharacteristic(this.platform.Characteristic.RotationSpeed)
       .onSet(this.setFanMode.bind(this))
       .onGet(this.getFanMode.bind(this));
 
-    // Set the refresh interval for continous device characteristic updates. Hardcoded to 1min here, I should make this a config option
+    // Set the refresh interval for continuous device characteristic updates. Hardcoded to 1min here, I should make this a config option
     setInterval(() => this.hardUpdateDeviceCharacteristics(), this.platform.hardRefreshInterval);
     setInterval(() => this.softUpdateDeviceCharacteristics(), this.platform.softRefreshInterval);
   }
 
   // SET's are async as these need to wait on API response then cache the return value on the hvac Class instance
-  // GET's run non async as this is a quick retrival from the hvac class insatnce cache
+  // GET's run non async as this is a quick retrieval from the hvac class instance cache
   // UPDATE is run Async as this polls the API first to confirm current cache state is accurate
   async hardUpdateDeviceCharacteristics() {
     const currentStatus = await this.platform.hvacInstance.getStatus();
@@ -92,7 +92,7 @@ export class MasterControllerAccessory {
       this.platform.log.error(`Master Controller is offline. Check Master Controller Internet/Wifi connection.\n
       Refreshing HomeKit accessory state using cached data`);
     } else {
-      this.platform.log.debug('Succesfully refreshed HomeKit accessory state from Que cloud\n');
+      this.platform.log.debug('Successfully refreshed HomeKit accessory state from Que cloud\n');
     }
   }
 
@@ -222,7 +222,7 @@ export class MasterControllerAccessory {
 
   getHeatingThresholdTemperature(): CharacteristicValue {
     const targetTemp = this.platform.hvacInstance.masterHeatingSetTemp;
-    // this.platform.log.debug('Got Master Target Heating Temerature -> ', targetTemp);
+    // this.platform.log.debug('Got Master Target Heating Temperature -> ', targetTemp);
     return targetTemp;
   }
 

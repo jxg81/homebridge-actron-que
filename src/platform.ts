@@ -13,7 +13,7 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
   public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
   public readonly accessories: PlatformAccessory[] = [];
 
-  // Attributes required for intialisation of ActronQue platform
+  // Attributes required for initialisation of ActronQue platform
   private readonly clientName: string;
   private readonly username: string;
   private readonly password: string;
@@ -125,7 +125,7 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
         this.zonesFollowMaster, this.zonesPushMaster);
       let hvacSerial = '';
       hvacSerial = await this.hvacInstance.actronQueApi(this.username, this.password, this.userProvidedSerialNo);
-      // Make sure we have havc master and zone data before adding devices
+      // Make sure we have hvac master and zone data before adding devices
       await this.hvacInstance.getStatus();
       const devices: DiscoveredDevices[] = [
         {

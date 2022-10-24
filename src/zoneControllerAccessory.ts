@@ -3,7 +3,7 @@ import { ClimateMode, CompressorMode } from './types';
 import { ActronQuePlatform } from './platform';
 import { HvacZone } from './hvacZone';
 
-// This class represents the master controller, a seperate class is used for representing zones (or will be once i write it)
+// This class represents the master controller, a separate class is used for representing zones (or will be once i write it)
 export class ZoneControllerAccessory {
   private hvacService: Service;
   // some versions of the zone sensor do not support humidity
@@ -26,14 +26,14 @@ export class ZoneControllerAccessory {
     this.hvacService = this.accessory.getService(this.platform.Service.HeaterCooler)
     || this.accessory.addService(this.platform.Service.HeaterCooler);
 
-    // Set accesory display name, this is taken from discover devices in platform
+    // Set accessory display name, this is taken from discover devices in platform
     this.hvacService.setCharacteristic(this.platform.Characteristic.Name, accessory.displayName);
 
     // Get or create the humidity sensor service.
     this.batteryService = this.accessory.getService(this.platform.Service.Battery)
     || this.accessory.addService(this.platform.Service.Battery);
 
-    // Get or create the humidity sensor service if the zone sensor supoprts humidity readings
+    // Get or create the humidity sensor service if the zone sensor supports humidity readings
     if (this.zone.zoneHumiditySensor) {
       this.humidityService = this.accessory.getService(this.platform.Service.HumiditySensor)
           || this.accessory.addService(this.platform.Service.HumiditySensor);
@@ -92,7 +92,7 @@ export class ZoneControllerAccessory {
   }
 
   // SET's are async as these need to wait on API response then cache the return value on the hvac Class instance
-  // GET's run non async as this is a quick retrival from the hvac class insatnce cache
+  // GET's run non async as this is a quick retrieval from the hvac class instance cache
   // UPDATE is run Async as this polls the API first to confirm current cache state is accurate
   async softUpdateDeviceCharacteristics() {
     this.hvacService.updateCharacteristic(this.platform.Characteristic.Active, this.getEnableState());
@@ -265,7 +265,7 @@ export class ZoneControllerAccessory {
       value = this.zone.minCoolSetPoint;
     }
     await this.zone.setCoolTemp(value as number);
-    this.platform.log.debug(`Set Zone ${this.zone.zoneName} Taget Cooling Temperature -> `, value);
+    this.platform.log.debug(`Set Zone ${this.zone.zoneName} Target Cooling Temperature -> `, value);
   }
 
   getCoolingThresholdTemperature(): CharacteristicValue {

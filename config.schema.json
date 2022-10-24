@@ -95,7 +95,7 @@
       },
       "minHeatingTemp": {
         "title": "Minimum Heating Temp",
-        "description": "Minimum temp setting for hetaing in degrees celsius",
+        "description": "Minimum temp setting for heating in degrees celsius",
         "type": "integer",
         "required": false,
         "default": 10,

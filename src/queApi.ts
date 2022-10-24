@@ -26,7 +26,7 @@ export default class QueApi {
   constructor(
     private readonly username: string,
     private readonly password: string,
-    private readonly apiClinetName: string,
+    private readonly apiClientName: string,
     private readonly log: Logger,
     private readonly hbUserStoragePath: string,
     actronSerial = '',
@@ -41,15 +41,15 @@ export default class QueApi {
     }
     if (!fs.existsSync(this.apiClientIdFile)) {
       this.apiClientId = this.generateClientId();
-      fs.writeFileSync(this.apiClientIdFile, `[{"name": "${this.apiClinetName}", "id": "${this.apiClientId}"}]`);
+      fs.writeFileSync(this.apiClientIdFile, `[{"name": "${this.apiClientName}", "id": "${this.apiClientId}"}]`);
     } else {
       const registeredDevices: object[] = JSON.parse(fs.readFileSync(this.apiClientIdFile).toString());
       for (const registeredDevice of registeredDevices) {
-        if (registeredDevice['name'] === this.apiClinetName) {
+        if (registeredDevice['name'] === this.apiClientName) {
           this.apiClientId = registeredDevice['id'];
         } else {
           this.apiClientId = this.generateClientId();
-          registeredDevices.push({name: this.apiClinetName, id: this.apiClientId});
+          registeredDevices.push({name: this.apiClientName, id: this.apiClientId});
           fs.writeFileSync(this.apiClientIdFile, JSON.stringify(registeredDevices));
         }
       }
@@ -117,7 +117,7 @@ export default class QueApi {
         } else {
           fs.writeFileSync(this.refreshTokenFile, '{"expires": 0, "token": ""}');
           fs.writeFileSync(this.bearerTokenFile, '{"expires": 0, "token": ""}');
-          throw Error(`Maximum retires excced on failed Authorisation: http status code = ${response.status}\n
+          throw Error(`Maximum retires exceeded on failed Authorisation: http status code = ${response.status}\n
           If you recently revoked access for clients on the Que portal, a restart should resolve the issue`);
         }
 
@@ -127,9 +127,9 @@ export default class QueApi {
         throw Error(`Looks like you have a username or password issue, check your config file: http status code = ${response.status}\n
         If you recently revoked access for clients on the Que portal, a restart should resolve the issue`);
 
-      // observed occasional gateway timeouts when querying the API. This allows for a couple of retrys before failing
-      // made the fall through after max retires return a manageable error to the functions as Actron API can be flakey
-      // and want to avoid the plugin crashing completely and allow for a graceful recovery once things stabalise
+      // observed occasional gateway timeouts when querying the API. This allows for a couple of retries before failing
+      // made the fall through after max retires return a manageable error to the functions as Actron API can be flaky
+      // and want to avoid the plugin crashing completely and allow for a graceful recovery once things stabilise
       case(response.status >= 500 && response.status <= 599):
         if (retries > 0) {
           await wait();
@@ -144,7 +144,7 @@ export default class QueApi {
       default:
         fs.writeFileSync(this.refreshTokenFile, '{"expires": 0, "token": ""}');
         fs.writeFileSync(this.bearerTokenFile, '{"expires": 0, "token": ""}');
-        throw Error(`An unhandled error has occured: http status code = ${response.status}\n
+        throw Error(`An unhandled error has occurred: http status code = ${response.status}\n
         If you recently revoked access for clients on the Que portal, a restart may resolve the issue`);
     }
   }
@@ -157,14 +157,14 @@ export default class QueApi {
     const valid: boolean = (schemaValidation.length === 0) ? true : false;
     if (!valid) {
       this.log.warn('API Returned Bad Data - Schema Validation Failed');
-      this.log.debug('Invalid schema for API respoonse', schemaValidation);
+      this.log.debug('Invalid schema for API response', schemaValidation);
       this.log.debug('API returned following data resulting in schema validation error:\n', JSON.stringify(data));
     }
     return valid;
   }
 
-  async initalizer() {
-    // intiilisation is done outside of the constructor as we need to 'await' the collection of auth tokens
+  async initializer() {
+    // initialisation is done outside of the constructor as we need to 'await' the collection of auth tokens
     // we also need to await the collection of the device serial number for future API requests.
     await this.tokenGenerator();
     await this.getAcSystems();
@@ -175,12 +175,12 @@ export default class QueApi {
   generateClientId () {
     // simple method to generate a unique client ID if registering a new client
     const randomNumber = Math.round(Math.random() * (99999 - 10001) + 10001);
-    return this.apiClinetName + '-' + randomNumber;
+    return this.apiClientName + '-' + randomNumber;
   }
 
   private async getRefreshToken(): Promise<apiToken> {
-    // Registers the clinet if not already registered and collects the refresh (access) token
-    // refresh token will be stored to a file for perssistence
+    // Registers the client if not already registered and collects the refresh (access) token
+    // refresh token will be stored to a file for persistence
     const url: string = this.basePath + '/api/v0/client/user-devices';
     const preparedRequest = new Request (url, {
       method: 'POST',
@@ -188,7 +188,7 @@ export default class QueApi {
       body: new URLSearchParams({
         username: this.username,
         password: this.password,
-        deviceName: this.apiClinetName,
+        deviceName: this.apiClientName,
         deviceUniqueIdentifier: this.apiClientId,
         client: 'ios',
       }),
@@ -283,13 +283,13 @@ export default class QueApi {
 
   private async getAcSystems(): Promise<void> {
     // Get a list of all AC systems in the account and select the correct unit
-    // logic assumes a sinle unit in your account, but if there is multiple you can specify whcih one you want
+    // logic assumes a single unit in your account, but if there is multiple you can specify which one you want
     const url : string = this.basePath + '/api/v0/client/ac-systems';
     const preparedRequest = new Request (url, {
       method: 'GET',
       headers: {'Authorization': `Bearer ${this.bearerToken.token}`},
     });
-    // Killing intialisation and throwing errors if we cant get the AC serial number
+    // Killing initialisation and throwing errors if we cant get the AC serial number
     let response: object = {};
     let valid_response = false;
     try {
@@ -302,7 +302,7 @@ export default class QueApi {
       }
     }
     if ('apiAccessError' in response || !valid_response) {
-      throw Error('Couldnt reach Actron Que Cloud to retrieve system list and intialise plugin');
+      throw Error('Could not reach Actron Que Cloud to retrieve system list and initialise plugin');
     }
     const systemList: object[] = response['_embedded']['ac-system'];
     // if there is no serial provided and only one system then assume this is the target system
@@ -356,16 +356,16 @@ export default class QueApi {
     const zoneCurrentStatus: ZoneStatus[] = [];
 
     // zone index number is based on the order in the returned array, we add the zone index to the
-    // results as we need this to send commands later. The zone data is enclosed behid the serial number
+    // results as we need this to send commands later. The zone data is enclosed behind the serial number
     // we are also capturing the serial number of the sensor to be used later in the homebridge UUID generation
-    // also mapping the zone enabled sate into this field as its traccked seperate to the zone info
+    // also mapping the zone enabled sate into this field as its tracked separate to the zone info
     let loopIndex = 0;
     for (const zone of zoneCurrentStateSettings) {
       const zoneIndex = loopIndex;
       loopIndex++;
       const sensorId = Object.keys(zone['Sensors'])[0];
 
-      // Skip the zone entries that arent populated with a remote sensor, these seem to all have 'MASTER_CONTROLLER' as the
+      // Skip the zone entries that aren't populated with a remote sensor, these seem to all have 'MASTER_CONTROLLER' as the
       // 'NV_Kind'. This works for my system, you may want to check the response data here if you have zone
       // detection issues on your system
       if (zone['Sensors'][sensorId]['NV_Kind'] === 'MASTER_CONTROLLER') {
@@ -420,7 +420,7 @@ export default class QueApi {
     return currentStatus;
   }
 
-  // defaulting zoneIndex here to 255 as this should be an invalid value, but maybe i should do soemthing different
+  // defaulting zoneIndex here to 255 as this should be an invalid value, but maybe i should do something different
   async runCommand(commandType: validApiCommands, coolTemp = 20.0, heatTemp = 20.0, zoneIndex = 255): Promise<CommandResult> {
     // this function does what it says on the tin. Run the command issued to the system.
     // all possible commands are stored in 'queCommands'
@@ -448,10 +448,10 @@ export default class QueApi {
       this.log.error(`API Error when attempting command send:\n ${JSON.stringify(command)}`);
       return CommandResult.API_ERROR;
     } else if (response['type'] === 'ack') {
-      this.log.debug(`Command sucessful, 'ack' recieved from Actron Cloud:\n ${JSON.stringify(response['value'])}`);
+      this.log.debug(`Command successful, 'ack' received from Actron Cloud:\n ${JSON.stringify(response['value'])}`);
       return CommandResult.SUCCESS;
     } else {
-      this.log.debug(`Command failed, NO 'ack' recieved from Actron Cloud:\n 
+      this.log.debug(`Command failed, NO 'ack' received from Actron Cloud:\n 
       Command attempted: ${JSON.stringify(command)}\n
       API response: ${JSON.stringify(response)}`);
       return CommandResult.FAILURE;

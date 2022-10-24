@@ -40,7 +40,7 @@ export class HvacUnit {
   async actronQueApi(username: string, password: string, serialNo = '') {
     this.type = 'actronQue';
     this.apiInterface = new QueApi(username, password, this.name, this.log, this.hbUserStoragePath, serialNo);
-    await this.apiInterface.initalizer();
+    await this.apiInterface.initializer();
     if (this.apiInterface.actronSerial) {
       this.serialNo = this.apiInterface.actronSerial;
     } else {

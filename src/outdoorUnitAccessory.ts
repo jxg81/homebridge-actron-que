@@ -1,7 +1,7 @@
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 import { ActronQuePlatform } from './platform';
 
-// This class represents the master controller, a seperate class is used for representing zones (or will be once i write it)
+// This class represents the master controller, a separate class is used for representing zones (or will be once i write it)
 export class OutdoorUnitAccessory {
   private temperatureService: Service;
 
@@ -20,7 +20,7 @@ export class OutdoorUnitAccessory {
     this.temperatureService = this.accessory.getService(this.platform.Service.TemperatureSensor)
     || this.accessory.addService(this.platform.Service.TemperatureSensor);
 
-    // Set accesory display name, this is taken from discover devices in platform
+    // Set accessory display name, this is taken from discover devices in platform
     this.temperatureService.setCharacteristic(this.platform.Characteristic.Name, accessory.displayName + '-outdoorUnit');
 
     this.temperatureService.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
@@ -31,7 +31,7 @@ export class OutdoorUnitAccessory {
   }
 
   // SET's are async as these need to wait on API response then cache the return value on the hvac Class instance
-  // GET's run non async as this is a quick retrival from the hvac class insatnce cache
+  // GET's run non async as this is a quick retrieval from the hvac class instance cache
   // UPDATE is run Async as this polls the API first to confirm current cache state is accurate
   async softUpdateDeviceCharacteristics() {
     this.temperatureService.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.getCurrentTemperature());

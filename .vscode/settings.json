@@ -4,5 +4,18 @@
       "source.fixAll.eslint": true
     },
     "editor.rulers": [ 140 ],
-    "eslint.enable": true
+    "eslint.enable": true,
+    "cSpell.words": [
+      "Actron",
+      "actronair",
+      "aircon",
+      "clientid",
+      "cmds",
+      "EHOSTDOWN",
+      "hvac",
+      "refreshinterval",
+      "Setpoint",
+      "vars"
+    ],
+    "cSpell.language": "en-GB"
   }
