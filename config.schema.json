@@ -1,63 +1,108 @@
 {
-    "pluginAlias": "ActronQue",
-    "pluginType": "platform",
-    "singular": true,
-    "schema": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "title": "Name",
-          "type": "string",
-          "required": true,
-          "default": "ActronQue"
-        },
-        "username": {
-          "title": "Que Account Username",
-          "type": "string",
-          "required": true,
-          "placeholder": "myname@domain.com"
-        },
-        "password": {
-          "title": "Que Account Password",
-          "type": "string",
-          "required": true,
-          "placeholder": "password"
-        },
-        "zonesFollowMaster": {
-          "title": " Set ALL Zones to Master Temp on Master Temp Change",
-          "description": "Sets 'Control All Zones' for master temp changes. Recommended to leave this setting on.",
-          "type": "boolean",
-          "required": false,
-          "default": true
-        },
-        "zonesPushMaster": {
-          "title": " Adjust Master Temp if Zone Set Outside of Permitted Thresholds",
-          "description": "If zone is set outside of allowed +/- 2 degree variance then push the master temp to allow setting",
-          "type": "boolean",
-          "required": false,
-          "default": true
-        },
-        "clientName": {
-          "title": "Client Name",
-          "description": "Used to register plugin on Que Cloud as an 'Authorised Device' & default HomeKit name.",
-          "type": "string",
-          "required": true,
-          "default": "homebridgeQue"
-        },
-        "refreshInterval": {
-          "title": "Periodic Refresh Interval",
-          "description": "Time in seconds to refresh device state information from Que API and in HomeKit.",
-          "type": "integer",
-          "required": false,
-          "default": 60
-        },
-        "deviceSerial": {
-          "title": "Que System Serial Number",
-          "description": "Only required if you have multiple systems in your Que cloud account.",
-          "type": "string",
-          "required": false,
-          "placeholder": "Leave Blank If You Have A Single Que System - Plugin Will Auto Discover"
+  "pluginAlias": "ActronQue",
+  "pluginType": "platform",
+  "singular": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "required": true,
+        "default": "ActronQue"
+      },
+      "username": {
+        "title": "Que Account Username",
+        "type": "string",
+        "required": true,
+        "placeholder": "myname@domain.com"
+      },
+      "password": {
+        "title": "Que Account Password",
+        "type": "string",
+        "required": true,
+        "placeholder": "password"
+      },
+      "zonesFollowMaster": {
+        "title": " Set ALL Zones to Master Temp on Master Temp Change",
+        "description": "Sets 'Control All Zones' for master temp changes. Recommended to leave this setting on.",
+        "type": "boolean",
+        "required": false,
+        "default": true
+      },
+      "zonesPushMaster": {
+        "title": " Adjust Master Temp if Zone Set Outside of Permitted Thresholds",
+        "description": "If zone is set outside of allowed +/- 2 degree variance then push the master temp to allow setting",
+        "type": "boolean",
+        "required": false,
+        "default": true
+      },
+      "clientName": {
+        "title": "Client Name",
+        "description": "Used to register plugin on Que Cloud as an 'Authorised Device' & default HomeKit name.",
+        "type": "string",
+        "required": true,
+        "default": "homebridgeQue"
+      },
+      "refreshInterval": {
+        "title": "Periodic Refresh Interval",
+        "description": "Time in seconds to refresh device state information from Que API and in HomeKit.",
+        "type": "integer",
+        "required": false,
+        "default": 60
+      },
+      "deviceSerial": {
+        "title": "Que System Serial Number",
+        "description": "Only required if you have multiple systems in your Que cloud account.",
+        "type": "string",
+        "required": false,
+        "placeholder": "Leave Blank If You Have A Single Que System - Plugin Will Auto Discover"
+      },
+      "adjustThresholds": {
+      "title": " Modify default heating cooling threshold temperatures",
+      "description": "Cooling default min/max = 20/32. Heating default min/max = 10/26",
+      "type": "boolean"
+      },
+      "maxCoolingTemp": {
+        "title": "Maximum Cooling Temp",
+        "description": "Maximum temp setting for cooling in degrees celsius",
+        "type": "integer",
+        "required": false,
+        "default": 32,
+        "condition": {
+          "functionBody": "return model.adjustThresholds === true;"
+        }
+      },
+      "minCoolingTemp": {
+        "title": "Minimum Cooling Temp",
+        "description": "Minimum temp setting for cooling in degrees celsius",
+        "type": "integer",
+        "required": false,
+        "default": 20,
+        "condition": {
+          "functionBody": "return model.adjustThresholds === true;"
+        }
+      },
+      "maxHeatingTemp": {
+        "title": "Maximum Heating Temp",
+        "description": "Maximum temp setting for heating in degrees celsius",
+        "type": "integer",
+        "required": false,
+        "default": 26,
+        "condition": {
+          "functionBody": "return model.adjustThresholds === true;"
+        }
+      },
+      "minHeatingTemp": {
+        "title": "Minimum Heating Temp",
+        "description": "Minimum temp setting for hetaing in degrees celsius",
+        "type": "integer",
+        "required": false,
+        "default": 10,
+        "condition": {
+          "functionBody": "return model.adjustThresholds === true;"
         }
       }
     }
   }
+}
