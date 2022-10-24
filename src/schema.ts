@@ -40,7 +40,7 @@ export const SystemStatusSchema: Schema = {
               type: 'string',
             },
             OutdoorUnit: {
-              properties: {
+              optionalProperties: {
                 AmbTemp: {
                   type: 'float64',
                 },
@@ -114,10 +114,12 @@ export const SystemStatusSchema: Schema = {
         },
         RemoteZoneInfo: {
           elements: {
-            properties: {
+            optionalProperties: {
               CanOperate: {
                 type: 'boolean',
               },
+            },
+            properties: {
               LiveTemp_oC: {
                 type: 'float64',
               },

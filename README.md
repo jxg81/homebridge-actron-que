@@ -26,6 +26,10 @@ This is an 'almost' feature complete implementation of the Que platfrom in HomeK
  - Report battery level on zone sensors and get low battery alerts in the home app
  - Support for homebridge config UI
 
+Fixes/Improvements in version 1.2.4
+ - Improved support for variations in API data returned for differing models of Que systems
+ - Added option to override the defualt heating/cooling threshold temperatures via plugin configuration
+
 Fixes/Improvements in version 1.2.3
  - Resolve intermitent crash on device status refresh -> `https://github.com/jxg81/homebridge-actron-que/issues/3`
  - Implemented JSON Typedef schema validation for all Que API responses, see [Schema Validation Errors](#schema-validation-errors)
@@ -96,7 +100,11 @@ If you are not using the Humbridge config UI you can add the following to your h
             "zonesFollowMaster": true | false,
             "zonesPushMaster": true | false,
             "refreshInterval": 60,
-            "deviceSerial": ""
+            "deviceSerial": "",
+            "maxCoolingTemp": 32,
+            "minCoolingTemp": 20,
+            "maxHeatingTemp": 26,
+            "minHeatingTemp": 10,
         }]
 ```
 
@@ -162,13 +170,56 @@ default: true
 Setting this to true will make it so that chnages to the zone temprature setting in homekit will push the master unit threshold temps for heat and cool if required. There is a +/- 2 degree variation permitted between the master temp and zone temps. Normally the Que native controls will restrict you to this temp range unless you manually adjust the master temp first. This option simply pushes the master temp to a new setting if you set the zone outside of the variance. Setting this to true has greatly increased my familys satisfaction with the controls.
 
 #### `deviceSerial`
+
 type: string (lowercase)
 
 default: ""
 
 In most cases you can exclude this option or leave it blank. If you only have a single air con system in your Que account the plugin will auto-discover the target device serial number. If you have multiple Que systems in your account you will need to specify which system you want to control by entering the serail number here. You can get your device serail numbers by logging in to que.actronair.com.au and looking at the list of authorised devices.
 
+#### `maxCoolingTemp`
 
+type: number
+
+Unit: celsius
+
+default: 32
+
+Highest temp that the cooling mode can be set. Refer to you Que system settings for the correct value.
+This setting is optional and only needs to be set if the defaults do not align with your system configuration.
+
+#### `minCoolingTemp`
+
+type: number
+
+Unit: celsius
+
+default: 20
+
+Lowest temp that the cooling mode can be set. Refer to you Que system settings for the correct value.
+This setting is optional and only needs to be set if the defaults do not align with your system configuration.
+
+#### `maxHeatingTemp`
+
+type: number
+
+Unit: celsius
+
+default: 26
+
+Highest temp that the heating mode can be set. Refer to you Que system settings for the correct value.
+This setting is optional and only needs to be set if the defaults do not align with your system configuration.
+
+#### `minHeatingTemp`
+
+type: number
+
+Unit: celsius
+
+default: 10
+
+Lowest temp that the heating mode can be set. Refer to you Que system settings for the correct value.
+This setting is optional and only needs to be set if the defaults do not align with your system configuration.
 ### HTTP Error Handling
 
 The plugin has been designed to manage the following HTTP error states

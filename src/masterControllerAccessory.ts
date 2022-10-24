@@ -50,8 +50,8 @@ export class MasterControllerAccessory {
     // The min/max values here are based on the hardcoded data taken from my unit
     this.hvacService.getCharacteristic(this.platform.Characteristic.HeatingThresholdTemperature)
       .setProps({
-        minValue: 10,
-        maxValue: 26,
+        minValue: this.platform.minHeatingTemp,
+        maxValue: this.platform.maxHeatingTemp,
         minStep: 0.5,
       })
       .onGet(this.getHeatingThresholdTemperature.bind(this))
@@ -60,8 +60,8 @@ export class MasterControllerAccessory {
     // The min/max values here are based on the hardcoded data taken from my unit
     this.hvacService.getCharacteristic(this.platform.Characteristic.CoolingThresholdTemperature)
       .setProps({
-        minValue: 20,
-        maxValue: 32,
+        minValue: this.platform.minCoolingTemp,
+        maxValue: this.platform.maxCoolingTemp,
         minStep: 0.5,
       })
       .onGet(this.getCoolingThresholdTemperature.bind(this))

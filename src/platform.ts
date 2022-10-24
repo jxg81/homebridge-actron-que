@@ -22,6 +22,10 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
   readonly zonesPushMaster: boolean = true;
   readonly hardRefreshInterval: number = 60000;
   readonly softRefreshInterval: number = 5000;
+  readonly maxCoolingTemp: number = 32;
+  readonly minCoolingTemp: number = 20;
+  readonly maxHeatingTemp: number = 26;
+  readonly minHeatingTemp: number = 10;
   hvacInstance!: HvacUnit;
 
   constructor(
@@ -55,6 +59,30 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
       this.log.debug('Auto refresh interval set to seconds', this.hardRefreshInterval/1000);
     } else {
       this.hardRefreshInterval = 60000;
+    }
+    if (config['maxCoolingTemp']) {
+      this.maxCoolingTemp = config['maxCoolingTemp'];
+      this.log.debug('Cooling threshold max set to', this.maxCoolingTemp);
+    } else {
+      this.maxCoolingTemp = 32;
+    }
+    if (config['minCoolingTemp']) {
+      this.minCoolingTemp = config['minCoolingTemp'];
+      this.log.debug('Cooling threshold min set to', this.minCoolingTemp);
+    } else {
+      this.minCoolingTemp = 20;
+    }
+    if (config['maxHeatingTemp']) {
+      this.maxHeatingTemp = config['maxHeatingTemp'];
+      this.log.debug('Heating threshold max set to', this.maxHeatingTemp);
+    } else {
+      this.maxHeatingTemp = 26;
+    }
+    if (config['minHeatingTemp']) {
+      this.minHeatingTemp = config['minHeatingTemp'];
+      this.log.debug('Heating threshold min set to', this.minHeatingTemp);
+    } else {
+      this.minHeatingTemp = 10;
     }
 
     // Check Required Config Fields
