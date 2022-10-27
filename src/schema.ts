@@ -22,7 +22,7 @@ export const SystemStatusSchema: Schema = {
               type: 'uint8',
             },
             CompressorChasingTemperature: {
-              type: 'uint8',
+              type: 'float64',
             },
             CompressorLiveTemperature: {
               type: 'float64',
