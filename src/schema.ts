@@ -87,10 +87,12 @@ export const SystemStatusSchema: Schema = {
           additionalProperties: true,
         },
         MasterInfo: {
-          properties: {
+          optionalProperties:{
             CanOperate: {
               type: 'boolean',
             },
+          },
+          properties: {
             CloudConnected: {
               type: 'string',
             },
