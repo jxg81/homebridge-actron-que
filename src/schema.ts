@@ -8,10 +8,7 @@ export const SystemStatusSchema: Schema = {
     lastKnownState: {
       properties: {
         LiveAircon: {
-          properties: {
-            AmRunningFan: {
-              type: 'boolean',
-            },
+          optionalProperties:{
             CanRunSystem: {
               type: 'boolean',
             },
@@ -21,15 +18,6 @@ export const SystemStatusSchema: Schema = {
             CompressorCapacity: {
               type: 'uint8',
             },
-            CompressorChasingTemperature: {
-              type: 'float64',
-            },
-            CompressorLiveTemperature: {
-              type: 'float64',
-            },
-            CompressorMode: {
-              type: 'string',
-            },
             IndoorUnitTemp: {
               type: 'float64',
             },
@@ -37,6 +25,26 @@ export const SystemStatusSchema: Schema = {
               type: 'string',
             },
             LastCompressorPowerChange_time: {
+              type: 'string',
+            },
+            SystemOn: {
+              type: 'boolean',
+            },
+            ZoneDemandSufficient: {
+              type: 'boolean',
+            },
+          },
+          properties: {
+            AmRunningFan: {
+              type: 'boolean',
+            },
+            CompressorChasingTemperature: {
+              type: 'float64',
+            },
+            CompressorLiveTemperature: {
+              type: 'float64',
+            },
+            CompressorMode: {
               type: 'string',
             },
             OutdoorUnit: {
@@ -77,17 +85,11 @@ export const SystemStatusSchema: Schema = {
               },
               additionalProperties: true,
             },
-            SystemOn: {
-              type: 'boolean',
-            },
-            ZoneDemandSufficient: {
-              type: 'boolean',
-            },
           },
           additionalProperties: true,
         },
         MasterInfo: {
-          properties: {
+          optionalProperties:{
             CanOperate: {
               type: 'boolean',
             },
@@ -97,6 +99,8 @@ export const SystemStatusSchema: Schema = {
             CloudReachable: {
               type: 'boolean',
             },
+          },
+          properties: {
             ControlAllZones: {
               type: 'boolean',
             },
