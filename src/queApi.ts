@@ -365,10 +365,9 @@ export default class QueApi {
       loopIndex++;
       const sensorId = Object.keys(zone['Sensors'])[0];
 
-      // Skip the zone entries that aren't populated with a remote sensor, these seem to all have 'MASTER_CONTROLLER' as the
-      // 'NV_Kind'. This works for my system, you may want to check the response data here if you have zone
-      // detection issues on your system
-      if (zone['Sensors'][sensorId]['NV_Kind'] === 'MASTER_CONTROLLER') {
+      // Have updated the logic from version 1.2.7 to check field NV_Exists to determine if zone is populated as have found an example
+      // where the master controller is also the zone controller. Validated this logic should work across four different sample systems.
+      if (!zone['NV_Exists']) {
         continue;
       }
 
