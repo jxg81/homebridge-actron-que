@@ -387,7 +387,7 @@ export default class QueApi {
         minCoolSetPoint: zone['MinCoolSetpoint'],
         currentHeatingSetTemp: zone['TemperatureSetpoint_Heat_oC'],
         currentCoolingSetTemp: zone['TemperatureSetpoint_Cool_oC'],
-        zoneSensorBattery: zone['Sensors'][sensorId]['Battery_pc'],
+        zoneSensorBattery: zone['Sensors'][sensorId]['Battery_pc'] === undefined ? 100 : zone['Sensors'][sensorId]['Battery_pc'],
         currentHumidity: zone['LiveHumidity_pc'] === undefined ? 'notSupported' : zone['LiveHumidity_pc'],
       };
       zoneCurrentStatus.push(zoneData);
