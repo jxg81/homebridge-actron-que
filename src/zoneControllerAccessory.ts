@@ -251,18 +251,24 @@ export class ZoneControllerAccessory {
   async setCoolingThresholdTemperature(value: CharacteristicValue) {
     this.checkHvacComms();
     if (this.platform.hvacInstance.zonesPushMaster === true) {
+      this.platform.log.debug('zones push master is set to True');
       if (value > this.zone.maxCoolSetPoint) {
-        await this.platform.hvacInstance.setCoolTemp(value as number + 2);
+        await this.platform.hvacInstance.setCoolTemp(value as number);
+        this.platform.log.debug(`Value is greater than max cool set point of ${this.zone.maxCoolSetPoint}, SETTING MASTER TO -> `, value);
         await this.platform.hvacInstance.getStatus();
       } else if (value < this.zone.minCoolSetPoint) {
-        await this.platform.hvacInstance.setCoolTemp(value as number);
+        await this.platform.hvacInstance.setCoolTemp(value as number - 2);
+        this.platform.log.debug(`Value is less than min cool set point of ${this.zone.maxCoolSetPoint}, SETTING MASTER TO -> `, value);
         await this.platform.hvacInstance.getStatus();
       }
     }
     if (value > this.zone.maxCoolSetPoint) {
       value = this.zone.maxCoolSetPoint;
+      this.platform.log.debug(`Value is greater than max cool set point of ${this.zone.maxCoolSetPoint}, CHANGING TO -> `, value);
     } else if (value < this.zone.minCoolSetPoint) {
       value = this.zone.minCoolSetPoint;
+      this.platform.log.debug(`Value is greater than max cool set point of ${this.zone.maxCoolSetPoint}, CHANGING TO -> `, value);
+
     }
     await this.zone.setCoolTemp(value as number);
     this.platform.log.debug(`Set Zone ${this.zone.zoneName} Target Cooling Temperature -> `, value);
