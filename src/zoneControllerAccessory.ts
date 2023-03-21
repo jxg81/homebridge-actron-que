@@ -3,7 +3,7 @@ import { ClimateMode, CompressorMode } from './types';
 import { ActronQuePlatform } from './platform';
 import { HvacZone } from './hvacZone';
 
-// This class represents the master controller, a separate class is used for representing zones (or will be once i write it)
+// This class represents the zone controller
 export class ZoneControllerAccessory {
   private hvacService: Service;
   // some versions of the zone sensor do not support humidity
@@ -232,11 +232,12 @@ export class ZoneControllerAccessory {
         await this.platform.hvacInstance.setHeatTemp(value as number + 2);
         await this.platform.hvacInstance.getStatus();
       }
-    }
-    if (value > this.zone.maxHeatSetPoint) {
-      value = this.zone.maxHeatSetPoint;
-    } else if (value < this.zone.minHeatSetPoint) {
-      value = this.zone.minHeatSetPoint;
+    } else {
+      if (value > this.zone.maxHeatSetPoint) {
+        value = this.zone.maxHeatSetPoint;
+      } else if (value < this.zone.minHeatSetPoint) {
+        value = this.zone.minHeatSetPoint;
+      }
     }
     await this.zone.setHeatTemp(value as number);
     this.platform.log.debug(`Set Zone ${this.zone.zoneName} Target Heating Temperature -> `, value);
@@ -251,18 +252,24 @@ export class ZoneControllerAccessory {
   async setCoolingThresholdTemperature(value: CharacteristicValue) {
     this.checkHvacComms();
     if (this.platform.hvacInstance.zonesPushMaster === true) {
+      this.platform.log.debug('zones push master is set to True');
       if (value > this.zone.maxCoolSetPoint) {
-        await this.platform.hvacInstance.setCoolTemp(value as number + 2);
+        await this.platform.hvacInstance.setCoolTemp(value as number - 2);
+        this.platform.log.debug(`Value is greater than MAX cool set point of ${this.zone.maxCoolSetPoint}, SETTING MASTER TO -> `, value);
         await this.platform.hvacInstance.getStatus();
       } else if (value < this.zone.minCoolSetPoint) {
         await this.platform.hvacInstance.setCoolTemp(value as number);
+        this.platform.log.debug(`Value is less than MIN cool set point of ${this.zone.minCoolSetPoint}, SETTING MASTER TO -> `, value);
         await this.platform.hvacInstance.getStatus();
       }
-    }
-    if (value > this.zone.maxCoolSetPoint) {
-      value = this.zone.maxCoolSetPoint;
-    } else if (value < this.zone.minCoolSetPoint) {
-      value = this.zone.minCoolSetPoint;
+    } else {
+      if (value > this.zone.maxCoolSetPoint) {
+        value = this.zone.maxCoolSetPoint;
+        this.platform.log.debug(`Value is greater than max cool set point of ${this.zone.maxCoolSetPoint}, CHANGING TO -> `, value);
+      } else if (value < this.zone.minCoolSetPoint) {
+        value = this.zone.minCoolSetPoint;
+        this.platform.log.debug(`Value is less than MIN cool set point of ${this.zone.minCoolSetPoint}, CHANGING TO -> `, value);
+      }
     }
     await this.zone.setCoolTemp(value as number);
     this.platform.log.debug(`Set Zone ${this.zone.zoneName} Target Cooling Temperature -> `, value);

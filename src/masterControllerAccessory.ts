@@ -2,7 +2,7 @@ import { Service, PlatformAccessory, CharacteristicValue, HAPStatus } from 'home
 import { ClimateMode, CompressorMode, FanMode, PowerState } from './types';
 import { ActronQuePlatform } from './platform';
 
-// This class represents the master controller, a separate class is used for representing zones (or will be once i write it)
+// This class represents the master controller, a separate class is used for representing zones
 export class MasterControllerAccessory {
   private hvacService: Service;
   private humidityService: Service;

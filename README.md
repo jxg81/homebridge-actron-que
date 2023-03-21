@@ -26,6 +26,10 @@ This is an 'almost' feature complete implementation of the Que platform in HomeK
  - Report battery level on zone sensors and get low battery alerts in the home app
  - Support for homebridge config UI
 
+Fixes/Improvements in version 1.2.7
+ - Allow master controller to also operate as a zone controller
+ - Resolved issue with logic controlling "Zones Push Master" temp adjustments which was causing setting to fail on first attempt
+
 Fixes/Improvements in version 1.2.4
  - Improved support for variations in API data returned for differing models of Que systems
  - Added option to override the default heating/cooling threshold temperatures via plugin configuration
