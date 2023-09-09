@@ -91,7 +91,7 @@ export default class QueApi {
           fetchError.code === 'ENETUNREACH' ||
           fetchError.code === 'ENOTFOUND' ||
           fetchError.code === 'EAI_AGAIN') {
-        this.log.warn('Cannot reach Que cloud service, check your network connection', fetchError.message);
+        this.log.warn('Cannot reach Neo cloud service, check your network connection', fetchError.message);
         errorResponse = {apiAccessError: fetchError};
         return errorResponse;
       } else {
@@ -156,6 +156,7 @@ export default class QueApi {
     const schemaValidation: unknown[] = validate(schema, data);
     const valid: boolean = (schemaValidation.length === 0) ? true : false;
     if (!valid) {
+      this.log.error(data);
       this.log.warn('API Returned Bad Data - Schema Validation Failed');
       this.log.debug('Invalid schema for API response', schemaValidation);
       this.log.debug('API returned following data resulting in schema validation error:\n', JSON.stringify(data));

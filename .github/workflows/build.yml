@@ -37,7 +37,7 @@ jobs:
     - name: Populate clientId file
       uses: devops-actions/json-to-file@v1.0.0
       with:
-        json: '[{"name": "homebridgeQueCommitTest", "id": "homebridgeQueCommitTest-12345"}]'
+        json: '[{"name": "homebridgeNeoCommitTest", "id": "homebridgeNeoCommitTest-12345"}]'
         filename: /var/lib/homebridge/homebridge-actron-neo-persist/clientid.token
     - name: Populate Homebridge config.json file
       uses: devops-actions/json-to-file@v1.0.0
@@ -51,14 +51,14 @@ jobs:
                 },
                 "platforms": [
                     {
-                    "name": "ActronQue",
+                    "name": "ActronNeo",
                     "username": "${{ secrets.USERNAME }}",
                     "password": "${{ secrets.PASSWORD }}",
                     "zonesFollowMaster": true,
                     "zonesPushMaster": true,
-                    "clientName": "homebridgeQueCommitTest",
+                    "clientName": "homebridgeNeoCommitTest",
                     "refreshInterval": 60,
-                    "platform": "ActronQue"
+                    "platform": "ActronNeo"
                     }
                   ]
                 }'
@@ -67,13 +67,13 @@ jobs:
       run: npm ci
     - name: Run commit script to test Homebridge integration of plugin - always exits cleanly
       run: timeout --preserve-status -k 120s 120s npm run commit || true
-    - name: Check log to confirm login to ActronQue Cloud
+    - name: Check log to confirm login to ActronNeo Cloud
       run: cat /var/lib/homebridge/homebridge.log | egrep 'located serial number .{8} with ID of .*'
-    - name: Check log to confirm status retrieved from ActronQue Cloud
+    - name: Check log to confirm status retrieved from ActronNeo Cloud
       run: cat /var/lib/homebridge/homebridge.log | egrep 'Got current status from Actron Cloud'
     - name: Check log to confirm no API error
       run: cat /var/lib/homebridge/homebridge.log | egrep '{"apiError":false,'
     - name: Check log to confirm creation of Actron master controller
-      run: cat /var/lib/homebridge/homebridge.log | egrep 'Adding new accessory. homebridgeQueCommitTest$'
+      run: cat /var/lib/homebridge/homebridge.log | egrep 'Adding new accessory. homebridgeNeoCommitTest$'
     - name: Check log to confirm creation of Actron outdoor unit
-      run: cat /var/lib/homebridge/homebridge.log | egrep 'Adding new accessory. homebridgeQueCommitTest-outdoorUnit'
+      run: cat /var/lib/homebridge/homebridge.log | egrep 'Adding new accessory. homebridgeNeoCommitTest-outdoorUnit'

@@ -99,11 +99,11 @@ export const SystemStatusSchema: Schema = {
             CloudReachable: {
               type: 'boolean',
             },
-          },
-          properties: {
             ControlAllZones: {
               type: 'boolean',
             },
+          },
+          properties: {
             LiveHumidity_pc: {
               type: 'float64',
             },
