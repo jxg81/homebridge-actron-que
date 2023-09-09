@@ -1,13 +1,13 @@
 
 # Actron QUE API Cheat Sheet
-This document details the process of authenticating, querying and sending commands to the Actron Que API.
+This document details the process of authenticating, querying and sending commands to the Actron Neo API.
 
-The details in this document have been aquired through online research, reverse engineering and testing against the Que API using my own Actron Que account and AC system. This information is provided without garuntee or warratny of any kind and has not been validated or provided by Actron.
+The details in this document have been aquired through online research, reverse engineering and testing against the Que API using my own Actron Que account and AC system. This information is provided without garuntee or warranty of any kind and has not been validated or provided by Actron.
 
-All requests should be sent to the Actron QUE API servers located at: `https://que.actronair.com.au`
+All requests should be sent to the Actron NEO API servers located at: `https://nimbus.actronair.com.au`
 
 ## Authentication ##
-Authentication to the Actron Que API is a two step process.  
+Authentication to the Actron Neo API is a two step process.  
 1. Request a pairing token to authorise a new device
 2. Use pairing token to request a bearer token
 
@@ -20,7 +20,7 @@ Specify the details of the client in the request body. The username and password
 Method: POST  
 Path: `/api/v0/client/user-devices`  
 Required Headers:
- - Host: que.actronair.com.au
+ - Host: nimbus.actronair.com.au
  - Content-Length: <content_length> 
  - Content-Type: application/x-www-form-urlencoded
 
@@ -53,7 +53,7 @@ Use the provided `pairingToken` (aka Refresh Token) to obtain a bearer toekn. Be
 Method: POST  
 Path: `/api/v0/oauth/token`  
 Required Headers:
- - Host: que.actronair.com.au
+ - Host: nimbus.actronair.com.au
  - Content-Length: <content_length> 
  - Content-Type: application/x-www-form-urlencoded
 
@@ -84,6 +84,7 @@ Queries will be sent with an empty body and return JSON data
 ### List AC Systems ###
 List all AC systems in the customer account. This will return the serial number of the unit you wish to control. The serial number must be set in the query string when sending commands or queries to the unit.  
 Path: `/api/v0/client/ac-systems`
+Parameters: `?includeNeo=true`
 
 ### Retrieve AC System Status ###
 Retireves the full status of the Actron AC unit targetted. Temprature, humidty, zone details etc.  

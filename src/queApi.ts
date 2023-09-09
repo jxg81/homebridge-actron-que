@@ -9,7 +9,7 @@ import { queApiCommands } from './queCommands';
 // Defines an api interface for the Que cloud service
 export default class QueApi {
 
-  private readonly basePath: string = 'https://que.actronair.com.au';
+  private readonly basePath: string = 'https://nimbus.actronair.com.au';
   private readonly persistentDataDir: string = this.hbUserStoragePath + '/homebridge-actron-que-persist';
   private readonly refreshTokenFile: string = this.persistentDataDir + '/access.token';
   private readonly bearerTokenFile: string = this.persistentDataDir + '/bearer.token';
@@ -284,7 +284,7 @@ export default class QueApi {
   private async getAcSystems(): Promise<void> {
     // Get a list of all AC systems in the account and select the correct unit
     // logic assumes a single unit in your account, but if there is multiple you can specify which one you want
-    const url : string = this.basePath + '/api/v0/client/ac-systems';
+    const url : string = this.basePath + '/api/v0/client/ac-systems?includeNeo=true';
     const preparedRequest = new Request (url, {
       method: 'GET',
       headers: {'Authorization': `Bearer ${this.bearerToken.token}`},
