@@ -279,7 +279,7 @@ export const CommandResponseSchema: Schema = {
       type: 'string',
     },
     value: {
-      properties: {
+      optionalProperties:{
         type: {
           type: 'string',
         },
