@@ -10,7 +10,7 @@ import { queApiCommands } from './queCommands';
 export default class QueApi {
 
   private readonly basePath: string = 'https://nimbus.actronair.com.au';
-  private readonly persistentDataDir: string = this.hbUserStoragePath + '/homebridge-actron-que-persist';
+  private readonly persistentDataDir: string = this.hbUserStoragePath + '/homebridge-actron-neo-persist';
   private readonly refreshTokenFile: string = this.persistentDataDir + '/access.token';
   private readonly bearerTokenFile: string = this.persistentDataDir + '/bearer.token';
   private readonly apiClientIdFile: string = this.persistentDataDir + '/clientid.token';
@@ -365,7 +365,7 @@ export default class QueApi {
       loopIndex++;
       const sensorId = Object.keys(zone['Sensors'])[0];
 
-      // Have updated the logic from version 1.2.7 to check field NV_Exists to determine if zone is populated as have found an example
+      // Have updated the logic from version 1.2.8 to check field NV_Exists to determine if zone is populated as have found an example
       // where the master controller is also the zone controller. Validated this logic should work across four different sample systems.
       if (!zone['NV_Exists']) {
         continue;
