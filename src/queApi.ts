@@ -157,8 +157,9 @@ export default class QueApi {
     const valid: boolean = (schemaValidation.length === 0) ? true : false;
     if (!valid) {
       this.log.warn('API Returned Bad Data - Schema Validation Failed');
-      this.log.debug('Invalid schema for API response', schemaValidation);
-      this.log.debug('API returned following data resulting in schema validation error:\n', JSON.stringify(data));
+      this.log.warn('Invalid schema for API response', schemaValidation);
+      this.log.warn('API returned following data resulting in schema validation error:\n', JSON.stringify(data));
+      this.log.warn('API returned following data resulting in schema validation error:\n', typeof(schema));
     }
     return valid;
   }
@@ -443,8 +444,11 @@ export default class QueApi {
       }
     }
 
-    if ('apiAccessError' in response || !valid_response) {
+    if ('apiAccessError' in response) {
       this.log.error(`API Error when attempting command send:\n ${JSON.stringify(command)}`);
+      return CommandResult.API_ERROR;
+    } else if (!valid_response) {
+      this.log.error(`Schema validation failure when attempting command send:\n ${JSON.stringify(command)}`);
       return CommandResult.API_ERROR;
     } else if (response['type'] === 'ack') {
       this.log.debug(`Command successful, 'ack' received from Actron Cloud:\n ${JSON.stringify(response['value'])}`);
