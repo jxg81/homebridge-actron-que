@@ -1,4 +1,4 @@
-# homebridge-actron-que
+# homebridge-actron-neo
 
 [![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins) 
 

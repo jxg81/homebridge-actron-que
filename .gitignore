@@ -3,7 +3,7 @@ dist
 
 # Ignore test created data
 test/
-homebridge-actron-que-persist
+homebridge-actron-neo-persist
 # ------------- Defaults ------------- #
 
 # Logs
