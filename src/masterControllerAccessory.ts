@@ -87,12 +87,12 @@ export class MasterControllerAccessory {
     const currentStatus = await this.platform.hvacInstance.getStatus();
     this.softUpdateDeviceCharacteristics();
     if (currentStatus.apiError) {
-      this.platform.log.info('Actron Que cloud error, refreshing HomeKit accessory state using cached data');
+      this.platform.log.info('Actron Neo cloud error, refreshing HomeKit accessory state using cached data');
     } else if (!currentStatus.cloudConnected) {
       this.platform.log.error(`Master Controller is offline. Check Master Controller Internet/Wifi connection.\n
       Refreshing HomeKit accessory state using cached data`);
     } else {
-      this.platform.log.debug('Successfully refreshed HomeKit accessory state from Que cloud\n');
+      this.platform.log.debug('Successfully refreshed HomeKit accessory state from Neo cloud\n');
     }
   }
 

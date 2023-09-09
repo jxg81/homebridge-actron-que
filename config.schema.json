@@ -1,5 +1,5 @@
 {
-  "pluginAlias": "ActronQue",
+  "pluginAlias": "ActronNeo",
   "pluginType": "platform",
   "singular": true,
   "schema": {
@@ -9,16 +9,16 @@
         "title": "Name",
         "type": "string",
         "required": true,
-        "default": "ActronQue"
+        "default": "ActronNeo"
       },
       "username": {
-        "title": "Que Account Username",
+        "title": "Neo Account Username",
         "type": "string",
         "required": true,
         "placeholder": "myname@domain.com"
       },
       "password": {
-        "title": "Que Account Password",
+        "title": "Neo Account Password",
         "type": "string",
         "required": true,
         "placeholder": "password"
@@ -39,24 +39,24 @@
       },
       "clientName": {
         "title": "Client Name",
-        "description": "Used to register plugin on Que Cloud as an 'Authorised Device' & default HomeKit name.",
+        "description": "Used to register plugin on Neo Cloud as an 'Authorised Device' & default HomeKit name.",
         "type": "string",
         "required": true,
-        "default": "homebridgeQue"
+        "default": "homebridge-actron-neo"
       },
       "refreshInterval": {
         "title": "Periodic Refresh Interval",
-        "description": "Time in seconds to refresh device state information from Que API and in HomeKit.",
+        "description": "Time in seconds to refresh device state information from Neo API and in HomeKit.",
         "type": "integer",
         "required": false,
         "default": 60
       },
       "deviceSerial": {
-        "title": "Que System Serial Number",
-        "description": "Only required if you have multiple systems in your Que cloud account.",
+        "title": "Neo System Serial Number",
+        "description": "Only required if you have multiple systems in your Neo cloud account.",
         "type": "string",
         "required": false,
-        "placeholder": "Leave Blank If You Have A Single Que System - Plugin Will Auto Discover"
+        "placeholder": "Leave Blank If You Have A Single Neo System - Plugin Will Auto Discover"
       },
       "adjustThresholds": {
       "title": " Modify default heating cooling threshold temperatures",

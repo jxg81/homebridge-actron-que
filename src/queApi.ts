@@ -135,7 +135,7 @@ export default class QueApi {
           await wait();
           return this.manageApiRequest(requestContent, retries -1);
         } else {
-          const serverError = new Error(`Actron Que API returned a server side error: http status code = ${response.status}`);
+          const serverError = new Error(`Actron Neo API returned a server side error: http status code = ${response.status}`);
           this.log.error('Maximum retries exceeded ->', serverError.message);
           errorResponse = {apiAccessError: serverError};
           return errorResponse;
@@ -145,7 +145,7 @@ export default class QueApi {
         fs.writeFileSync(this.refreshTokenFile, '{"expires": 0, "token": ""}');
         fs.writeFileSync(this.bearerTokenFile, '{"expires": 0, "token": ""}');
         throw Error(`An unhandled error has occurred: http status code = ${response.status}\n
-        If you recently revoked access for clients on the Que portal, a restart may resolve the issue`);
+        If you recently revoked access for clients on the Neo portal, a restart may resolve the issue`);
     }
   }
 
@@ -302,7 +302,7 @@ export default class QueApi {
       }
     }
     if ('apiAccessError' in response || !valid_response) {
-      throw Error('Could not reach Actron Que Cloud to retrieve system list and initialise plugin');
+      throw Error('Could not reach Actron Neo Cloud to retrieve system list and initialise plugin');
     }
     const systemList: object[] = response['_embedded']['ac-system'];
     // if there is no serial provided and only one system then assume this is the target system

@@ -29,16 +29,16 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
     - name: Create directories for config.json file and clientId file
-      run: sudo mkdir -p /var/lib/homebridge/ && sudo mkdir -p /var/lib/homebridge/homebridge-actron-que-persist/
+      run: sudo mkdir -p /var/lib/homebridge/ && sudo mkdir -p /var/lib/homebridge/homebridge-actron-neo-persist/
     - name: Create files for config file and clientId file
-      run: sudo touch /var/lib/homebridge/config.json && sudo touch /var/lib/homebridge/homebridge-actron-que-persist/clientid.token
+      run: sudo touch /var/lib/homebridge/config.json && sudo touch /var/lib/homebridge/homebridge-actron-neo-persist/clientid.token
     - name: Update permissions for created directories
-      run: sudo chmod -R 0777 /var/lib/homebridge/ && sudo chmod -R 0777 /var/lib/homebridge/homebridge-actron-que-persist/
+      run: sudo chmod -R 0777 /var/lib/homebridge/ && sudo chmod -R 0777 /var/lib/homebridge/homebridge-actron-neo-persist/
     - name: Populate clientId file
       uses: devops-actions/json-to-file@v1.0.0
       with:
         json: '[{"name": "homebridgeQueCommitTest", "id": "homebridgeQueCommitTest-12345"}]'
-        filename: /var/lib/homebridge/homebridge-actron-que-persist/clientid.token
+        filename: /var/lib/homebridge/homebridge-actron-neo-persist/clientid.token
     - name: Populate Homebridge config.json file
       uses: devops-actions/json-to-file@v1.0.0
       with:
