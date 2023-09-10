@@ -268,7 +268,7 @@ export const BearerTokenSchema: Schema = {
 };
 
 export const CommandResponseSchema: Schema = {
-  properties: {
+  optionalProperties: {
     correlationId: {
       type: 'string',
     },
