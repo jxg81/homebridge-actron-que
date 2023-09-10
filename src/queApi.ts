@@ -446,6 +446,7 @@ export default class QueApi {
 
     if ('apiAccessError' in response) {
       this.log.error(`API Error when attempting command send:\n ${JSON.stringify(command)}`);
+      this.log.error(`API responded with:\n ${JSON.stringify(response)}`);
       return CommandResult.API_ERROR;
     } else if (!valid_response) {
       this.log.error(`Schema validation failure when attempting command send:\n ${JSON.stringify(command)}`);
