@@ -79,7 +79,7 @@ export class HvacUnit {
     // if a zone DOES exist in zoneInstance for corresponding zoneData then run .updateStatus on the instance with the data
     // if a zone DOES NOT exist in zoneInstance for corresponding zoneData entry then create the zoneInstance
     for (const zone of this.zoneData) {
-      const targetInstance = this.zoneInstances.find(zoneInstance => zoneInstance.sensorId === zone.sensorId);
+      const targetInstance = this.zoneInstances.find(zoneInstance => zoneInstance.zoneName === zone.zoneName);
       if (targetInstance) {
         targetInstance.pushStatusUpdate(zone);
         this.log.warn('Skipping zone push for zone:', JSON.stringify(zone));
