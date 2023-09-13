@@ -1,5 +1,5 @@
 import QueApi from './queApi';
-import { PowerState, FanMode, ClimateMode, CompressorMode, validApiCommands, ZoneStatus, HvacStatus, CommandResult} from './types';
+import { PowerState, FanMode, ClimateMode, CompressorMode, validApiCommands, ZoneStatus, HvacStatus, CommandResult } from './types';
 import { Logger } from 'homebridge';
 import { HvacZone } from './hvacZone';
 
@@ -30,9 +30,9 @@ export class HvacUnit {
   zoneInstances: HvacZone[] = [];
 
   constructor(name: string,
-     private readonly log: Logger,
-     private readonly hbUserStoragePath: string,
-     readonly zonesFollowMaster = true,
+    private readonly log: Logger,
+    private readonly hbUserStoragePath: string,
+    readonly zonesFollowMaster = true,
     readonly zonesPushMaster = true) {
     this.name = name;
   }
@@ -64,13 +64,13 @@ export class HvacUnit {
     this.fanMode = (status.fanMode === undefined) ? this.fanMode : status.fanMode;
     this.fanRunning = (status.fanRunning === undefined) ? this.fanRunning : status.fanRunning;
     this.masterCoolingSetTemp = (status.masterCoolingSetTemp === undefined) ? this.masterCoolingSetTemp : status.masterCoolingSetTemp;
-    this.masterHeatingSetTemp = (status.masterHeatingSetTemp === undefined) ? this.masterHeatingSetTemp : status.masterHeatingSetTemp ;
+    this.masterHeatingSetTemp = (status.masterHeatingSetTemp === undefined) ? this.masterHeatingSetTemp : status.masterHeatingSetTemp;
     this.compressorChasingTemp = (status.compressorChasingTemp === undefined) ? this.compressorChasingTemp : status.compressorChasingTemp;
     this.compressorCurrentTemp = (status.compressorCurrentTemp === undefined) ? this.compressorCurrentTemp : status.compressorCurrentTemp;
     this.awayMode = (status.awayMode === undefined) ? this.awayMode : status.awayMode;
     this.quietMode = (status.quietMode === undefined) ? this.quietMode : status.quietMode;
     this.controlAllZones = (status.controlAllZones === undefined) ? this.controlAllZones : status.controlAllZones;
-    this.outdoorTemp = (status.outdoorTemp === undefined) ? this.outdoorTemp : status.outdoorTemp ;
+    this.outdoorTemp = (status.outdoorTemp === undefined) ? this.outdoorTemp : status.outdoorTemp;
     this.masterCurrentTemp = (status.masterCurrentTemp === undefined) ? this.masterCurrentTemp : status.masterCurrentTemp;
     this.masterHumidity = (status.masterCurrentHumidity === undefined) ? this.masterHumidity : status.masterCurrentHumidity;
     this.zoneData = (status.zoneCurrentStatus === undefined) ? this.zoneData : status.zoneCurrentStatus;
@@ -79,14 +79,16 @@ export class HvacUnit {
     // if a zone DOES exist in zoneInstance for corresponding zoneData then run .updateStatus on the instance with the data
     // if a zone DOES NOT exist in zoneInstance for corresponding zoneData entry then create the zoneInstance
     for (const zone of this.zoneData) {
-      const targetInstance = this.zoneInstances.find(zoneInstance => zoneInstance.sensorId === zone.sensorId);
-      if (targetInstance) {
-        targetInstance.pushStatusUpdate(zone);
-        this.log.warn('Skipping zone push for zone:', JSON.stringify(zone));
-      } else {
-        this.zoneInstances.push(new HvacZone(this.log, this.apiInterface, zone));
-        this.log.warn('Pushing zone:', JSON.stringify(zone));
-      }
+      // const targetInstance = this.zoneInstances.find(zoneInstance => zoneInstance.sensorId === zone.sensorId);
+      // if (targetInstance) {
+      //   targetInstance.pushStatusUpdate(zone);
+      //   this.log.warn('Skipping zone push for zone:', JSON.stringify(zone));
+      // } else {
+      //   this.zoneInstances.push(new HvacZone(this.log, this.apiInterface, zone));
+      //   this.log.warn('Pushing zone:', JSON.stringify(zone));
+      // }
+      this.zoneInstances.push(new HvacZone(this.log, this.apiInterface, zone));
+      this.log.warn('Pushing zone:', JSON.stringify(zone));
     }
     return status;
   }
@@ -100,7 +102,7 @@ export class HvacUnit {
     } else {
       const response = await this.apiInterface.runCommand(validApiCommands.ON);
       if (response === CommandResult.SUCCESS) {
-        this.powerState=PowerState.ON;
+        this.powerState = PowerState.ON;
       } else if (response === CommandResult.FAILURE) {
         await this.getStatus();
         this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
@@ -120,7 +122,7 @@ export class HvacUnit {
     } else {
       const response = await this.apiInterface.runCommand(validApiCommands.OFF);
       if (response === CommandResult.SUCCESS) {
-        this.powerState=PowerState.OFF;
+        this.powerState = PowerState.OFF;
       } else if (response === CommandResult.FAILURE) {
         await this.getStatus();
         this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
@@ -135,7 +137,7 @@ export class HvacUnit {
     const coolTemp = 0;
     const response = await this.apiInterface.runCommand(validApiCommands.HEAT_SET_POINT, coolTemp, heatTemp);
     if (response === CommandResult.SUCCESS) {
-      this.masterHeatingSetTemp=heatTemp;
+      this.masterHeatingSetTemp = heatTemp;
     } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
@@ -149,7 +151,7 @@ export class HvacUnit {
     const heatTemp = 0;
     const response = await this.apiInterface.runCommand(validApiCommands.COOL_SET_POINT, coolTemp, heatTemp);
     if (response === CommandResult.SUCCESS) {
-      this.masterCoolingSetTemp=coolTemp;
+      this.masterCoolingSetTemp = coolTemp;
     } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
@@ -163,21 +165,21 @@ export class HvacUnit {
   async setHeatCoolTemp(coolTemp: number, heatTemp: number): Promise<number[]> {
     const response = await this.apiInterface.runCommand(validApiCommands.HEAT_COOL_SET_POINT, coolTemp, heatTemp);
     if (response === CommandResult.SUCCESS) {
-      this.masterCoolingSetTemp=coolTemp;
-      this.masterHeatingSetTemp=heatTemp;
+      this.masterCoolingSetTemp = coolTemp;
+      this.masterHeatingSetTemp = heatTemp;
     } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
     } else {
       this.log.warn('Failed to send command, Actron Neo Cloud unreachable');
     }
-    return [this.masterCoolingSetTemp, this.masterHeatingSetTemp=heatTemp];
+    return [this.masterCoolingSetTemp, this.masterHeatingSetTemp = heatTemp];
   }
 
   async setClimateModeAuto(): Promise<ClimateMode> {
     const response = await this.apiInterface.runCommand(validApiCommands.CLIMATE_MODE_AUTO);
     if (response === CommandResult.SUCCESS) {
-      this.climateMode=ClimateMode.AUTO;
+      this.climateMode = ClimateMode.AUTO;
     } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
@@ -190,7 +192,7 @@ export class HvacUnit {
   async setClimateModeCool(): Promise<ClimateMode> {
     const response = await this.apiInterface.runCommand(validApiCommands.CLIMATE_MODE_COOL);
     if (response === CommandResult.SUCCESS) {
-      this.climateMode=ClimateMode.COOL;
+      this.climateMode = ClimateMode.COOL;
     } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
@@ -203,7 +205,7 @@ export class HvacUnit {
   async setClimateModeHeat(): Promise<ClimateMode> {
     const response = await this.apiInterface.runCommand(validApiCommands.CLIMATE_MODE_HEAT);
     if (response === CommandResult.SUCCESS) {
-      this.climateMode=ClimateMode.HEAT;
+      this.climateMode = ClimateMode.HEAT;
     } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
@@ -216,7 +218,7 @@ export class HvacUnit {
   async setClimateModeFan(): Promise<ClimateMode> {
     const response = await this.apiInterface.runCommand(validApiCommands.CLIMATE_MODE_FAN);
     if (response === CommandResult.SUCCESS) {
-      this.climateMode=ClimateMode.FAN;
+      this.climateMode = ClimateMode.FAN;
     } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
@@ -229,7 +231,7 @@ export class HvacUnit {
   async setFanModeAuto(): Promise<FanMode> {
     const response = await this.apiInterface.runCommand(validApiCommands.FAN_MODE_AUTO);
     if (response === CommandResult.SUCCESS) {
-      this.fanMode=FanMode.AUTO;
+      this.fanMode = FanMode.AUTO;
     } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
@@ -242,7 +244,7 @@ export class HvacUnit {
   async setFanModeLow(): Promise<FanMode> {
     const response = await this.apiInterface.runCommand(validApiCommands.FAN_MODE_LOW);
     if (response === CommandResult.SUCCESS) {
-      this.fanMode=FanMode.LOW;
+      this.fanMode = FanMode.LOW;
     } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
@@ -255,7 +257,7 @@ export class HvacUnit {
   async setFanModeMedium(): Promise<FanMode> {
     const response = await this.apiInterface.runCommand(validApiCommands.FAN_MODE_MEDIUM);
     if (response === CommandResult.SUCCESS) {
-      this.fanMode=FanMode.MEDIUM;
+      this.fanMode = FanMode.MEDIUM;
     } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
@@ -268,7 +270,7 @@ export class HvacUnit {
   async setFanModeHigh(): Promise<FanMode> {
     const response = await this.apiInterface.runCommand(validApiCommands.FAN_MODE_HIGH);
     if (response === CommandResult.SUCCESS) {
-      this.fanMode=FanMode.HIGH;
+      this.fanMode = FanMode.HIGH;
     } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
@@ -281,7 +283,7 @@ export class HvacUnit {
   async setAwayModeOn(): Promise<boolean> {
     const response = await this.apiInterface.runCommand(validApiCommands.AWAY_MODE_ON);
     if (response === CommandResult.SUCCESS) {
-      this.awayMode=true;
+      this.awayMode = true;
     } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
@@ -294,7 +296,7 @@ export class HvacUnit {
   async setAwayModeOff(): Promise<boolean> {
     const response = await this.apiInterface.runCommand(validApiCommands.AWAY_MODE_OFF);
     if (response === CommandResult.SUCCESS) {
-      this.awayMode=false;
+      this.awayMode = false;
     } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
@@ -307,7 +309,7 @@ export class HvacUnit {
   async setQuietModeOn(): Promise<boolean> {
     const response = await this.apiInterface.runCommand(validApiCommands.QUIET_MODE_ON);
     if (response === CommandResult.SUCCESS) {
-      this.quietMode=true;
+      this.quietMode = true;
     } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
@@ -320,7 +322,7 @@ export class HvacUnit {
   async setQuietModeOff(): Promise<boolean> {
     const response = await this.apiInterface.runCommand(validApiCommands.QUIET_MODE_OFF);
     if (response === CommandResult.SUCCESS) {
-      this.quietMode=false;
+      this.quietMode = false;
     } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
@@ -333,7 +335,7 @@ export class HvacUnit {
   async setControlAllZonesOn(): Promise<boolean> {
     const response = await this.apiInterface.runCommand(validApiCommands.CONTROL_ALL_ZONES_ON);
     if (response === CommandResult.SUCCESS) {
-      this.controlAllZones=true;
+      this.controlAllZones = true;
     } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
@@ -346,7 +348,7 @@ export class HvacUnit {
   async setControlAllZonesOff(): Promise<boolean> {
     const response = await this.apiInterface.runCommand(validApiCommands.CONTROL_ALL_ZONES_OFF);
     if (response === CommandResult.SUCCESS) {
-      this.controlAllZones=false;
+      this.controlAllZones = false;
     } else if (response === CommandResult.FAILURE) {
       await this.getStatus();
       this.log.error(`Failed to set master ${this.name}, refreshing master state from API`);
