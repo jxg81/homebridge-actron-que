@@ -1,13 +1,28 @@
-name: Release
+name: Tag & Release
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - '*'
 jobs:
   build:
     environment: deployment
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: "Build Changelog"
+        id: build_changelog
+        uses: mikepenz/release-changelog-builder-action@{latest-release}
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          body: ${{steps.build_changelog.outputs.changelog}}
+          draft: false
+          prerelease: false
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v2
         with:
