@@ -369,6 +369,7 @@ export default class QueApi {
       // Have updated the logic from version 1.2.8 to check field NV_Exists to determine if zone is populated as have found an example
       // where the master controller is also the zone controller. Validated this logic should work across four different sample systems.
       if (!zone['NV_Exists']) {
+        this.log.info('Unable to add zone : ', JSON.stringify(zone));
         continue;
       }
 
@@ -392,6 +393,8 @@ export default class QueApi {
         currentHumidity: zone['LiveHumidity_pc'] === undefined ? 'notSupported' : zone['LiveHumidity_pc'],
       };
       zoneCurrentStatus.push(zoneData);
+      this.log.info('Added zone: ', JSON.stringify(zoneData));
+
     }
 
     // This is the standardised format for the master controller. again, this wil be useful if i need to do
