@@ -29,6 +29,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: "cat package.json"
         run: cat ./package.json
+      - name: "Get Previous tag"
+        id: previoustag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+        with:
+          fallback: 1.0.0 # Optional fallback tag to use when no tag can be found
       - name: "Build Changelog"
         id: build_changelog
         uses: mikepenz/release-changelog-builder-action@v4.0.0
@@ -38,8 +43,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
+          tag_name: ${{ steps.previoustag.outputs.tag }}
+          release_name: ${{ steps.previoustag.outputs.tag }}
           body: ${{steps.build_changelog.outputs.changelog}}
           draft: false
           prerelease: false
