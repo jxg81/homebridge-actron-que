@@ -144,7 +144,7 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
       for (const zone of this.hvacInstance.zoneInstances) {
         devices.push({
           type: 'zoneController',
-          uniqueId: zone.sensorId,
+          uniqueId: zone.zoneName,
           displayName: zone.zoneName,
           instance: zone,
         });

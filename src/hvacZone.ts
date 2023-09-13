@@ -66,7 +66,7 @@ export class HvacZone {
       this.log.warn('Failed to refresh status, Actron Neo Cloud unreachable');
       return refreshState;
     }
-    const targetInstance = refreshState.zoneCurrentStatus.find(zoneInstance => zoneInstance.sensorId === this.sensorId) as ZoneStatus;
+    const targetInstance = refreshState.zoneCurrentStatus.find(zoneInstance => zoneInstance.zoneName === this.zoneName) as ZoneStatus;
     return targetInstance;
   }
 
