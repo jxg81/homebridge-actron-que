@@ -393,7 +393,7 @@ export default class QueApi {
         currentHumidity: zone['LiveHumidity_pc'] === undefined ? 'notSupported' : zone['LiveHumidity_pc'],
       };
       zoneCurrentStatus.push(zoneData);
-      this.log.info('Added zone: ', JSON.stringify(zoneData));
+      this.log.debug('Added zone: ', JSON.stringify(zoneData));
 
     }
 

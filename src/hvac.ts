@@ -82,8 +82,10 @@ export class HvacUnit {
       const targetInstance = this.zoneInstances.find(zoneInstance => zoneInstance.sensorId === zone.sensorId);
       if (targetInstance) {
         targetInstance.pushStatusUpdate(zone);
+        this.log.warn('Skipping zone push for zone:', JSON.stringify(zone));
       } else {
         this.zoneInstances.push(new HvacZone(this.log, this.apiInterface, zone));
+        this.log.warn('Pushing zone:', JSON.stringify(zone));
       }
     }
     return status;
