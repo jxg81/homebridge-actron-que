@@ -220,6 +220,7 @@ export const queApiCommands = {
 
 //#region "Helper Functions"
 
+// eslint-disable-next-line max-len
 function modifiedZoneStatuses(status: boolean, zoneIndex: number, currentZoneStatus: boolean[]) { // read-only property with getter function (this is not the same thing as a “function-property”)
   const modifiedValues = currentZoneStatus;
   modifiedValues[zoneIndex] = status;
