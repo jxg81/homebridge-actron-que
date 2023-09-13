@@ -2,7 +2,7 @@
   "private": false,
   "displayName": "Homebridge Actron Neo",
   "name": "homebridge-actron-neo",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Homebridge plugin for controlling Actron Neo controller systems",
   "license": "Apache-2.0",
   "repository": {
