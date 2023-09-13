@@ -2,15 +2,12 @@
 
 [![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins) 
 
-[![npm](https://img.shields.io/npm/v/@bstillitano/homebridge-actron-neo/latest?label=latest)](https://www.npmjs.com/package/@bstillitano/homebridge-actron-neo)
+[![npm](https://img.shields.io/npm/v/homebridge-actron-neo/latest?label=latest)](https://www.npmjs.com/package/homebridge-actron-neo)
 [![GitHub release](https://img.shields.io/github/release/bstillitano/homebridge-actron-neosvg)](https://github.com/bstillitano/homebridge-actron-neo/releases)
-[![npm](https://img.shields.io/npm/dt/@bstillitano/homebridge-actron-neo)](https://www.npmjs.com/package/@bstillitano/homebridge-actron-neo)
+[![npm](https://img.shields.io/npm/dt/homebridge-actron-neo)](https://www.npmjs.com/package/homebridge-actron-neo)
 
-[![Github CI](https://github.com/bstillitano/homebridge-actron-neo/actions/workflows/build.yml/badge.svg)](https://github.com/bstillitano/homebridge-actron-neo/actions)
- [![Github CD](https://github.com/bstillitano/homebridge-actron-neo/actions/workflows/release.yml/badge.svg)](https://github.com/bstillitano/homebridge-actron-neo/actions)
+[![Tag, Release & Publish](https://github.com/bstillitano/homebridge-actron-neo/actions/workflows/push.yml/badge.svg)](https://github.com/bstillitano/homebridge-actron-neo/actions/workflows/push.yml)
  [![Hex.pm](https://img.shields.io/hexpm/l/plug)](https://www.apache.org/licenses/LICENSE-2.0)
-
-[![paypal](https://img.shields.io/badge/donate-paypal-blue)](https://www.paypal.com/donate/?business=MP4ZR6WS8UPX8&no_recurring=0&item_name=%28jxg81%29+-+Thanks+for+your+support.&currency_code=AUD)
 
 Use this plugin to control your Actron Neo system with Apple HomeKit using Homebridge.
 
@@ -84,7 +81,7 @@ Setting `zonesPushMaster` to false will revert to the prior behaviour of constra
 
 ### CLI Install
 ```
-npm install -g @bstillitano/homebridge-actron-neo
+npm install -g homebridge-actron-neo
 ```
 Configure account details in the homebridge `config.json` file a below.
 ## Configuration
