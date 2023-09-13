@@ -423,11 +423,41 @@ export default class QueApi {
     return currentStatus;
   }
 
+  async getZoneStatuses(): Promise<boolean[]> {
+    // TODO - Shouldn't need to make this call, data should be available already beacuse we've made the `getStatus` call.
+    // retrieves the full status of the aircon unit and all zones
+    const preparedRequest = new Request (this.queryUrl, {
+      method: 'GET',
+      headers: {'Authorization': `Bearer ${this.bearerToken.token}`, 'Accept': 'application/json'},
+    });
+
+    let response: object = {};
+    let valid_response = false;
+    try {
+      response = await this.manageApiRequest(preparedRequest);
+      valid_response = await this.validateSchema(SystemStatusSchema, response);
+    } catch (error) {
+      if (error instanceof Error) {
+        this.log.error(error.message);
+        // decided not to throw error in this case to see if we can silently recover
+      }
+    }
+
+    if ('apiAccessError' in response || !valid_response) {
+      // TODO: - Return meaningful error
+      this.log.error('Unable to retrieve zone status information');
+      return [];
+    }
+
+    return response['lastKnownState']['UserAirconSettings']['EnabledZones'];
+  }
+
   // defaulting zoneIndex here to 255 as this should be an invalid value, but maybe i should do something different
   async runCommand(commandType: validApiCommands, coolTemp = 20.0, heatTemp = 20.0, zoneIndex = 255): Promise<CommandResult> {
     // this function does what it says on the tin. Run the command issued to the system.
     // all possible commands are stored in 'queCommands'
-    const command = queApiCommands[commandType](coolTemp, heatTemp, zoneIndex);
+    const currentStatus = await this.getZoneStatuses();
+    const command = queApiCommands[commandType](coolTemp, heatTemp, zoneIndex, currentStatus);
     this.log.debug(`attempting to send command:\n ${JSON.stringify(command)}`);
     const preparedRequest = new Request (this.commandUrl, {
       method: 'POST',
