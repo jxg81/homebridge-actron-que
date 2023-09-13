@@ -56,7 +56,7 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
     }
     if (config['refreshInterval']) {
       this.hardRefreshInterval = config['refreshInterval'] * 1000;
-      this.log.debug('Auto refresh interval set to seconds', this.hardRefreshInterval/1000);
+      this.log.debug('Auto refresh interval set to seconds', this.hardRefreshInterval / 1000);
     } else {
       this.hardRefreshInterval = 60000;
     }
@@ -153,8 +153,8 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
       this.log.debug('Discovered Devices \n', devices);
       // loop over the discovered devices and register each one if it has not already been registered
       for (const device of devices) {
-      // create uuid first then see if an accessory with the same uuid has already been registered and restored from
-      // the cached devices we stored in the `configureAccessory` method above
+        // create uuid first then see if an accessory with the same uuid has already been registered and restored from
+        // the cached devices we stored in the `configureAccessory` method above
         const uuid = this.api.hap.uuid.generate(device.uniqueId);
         const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
 
@@ -168,19 +168,19 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
         } else if (existingAccessory && device.type === 'outdoorUnit') {
           this.log.info('Restoring Outdoor Unit accessory from cache:', existingAccessory.displayName);
           new OutdoorUnitAccessory(this, existingAccessory);
-        } else if (!existingAccessory && device.type === 'masterController'){
+        } else if (!existingAccessory && device.type === 'masterController') {
           this.log.info('Adding new accessory:', device.displayName);
           const accessory = new this.api.platformAccessory(device.displayName, uuid);
           accessory.context.device = device;
           new MasterControllerAccessory(this, accessory);
           this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
-        } else if (!existingAccessory && device.type === 'zoneController'){
+        } else if (!existingAccessory && device.type === 'zoneController') {
           this.log.info('Adding new accessory:', device.displayName);
           const accessory = new this.api.platformAccessory(device.displayName, uuid);
           accessory.context.device = device;
           new ZoneControllerAccessory(this, accessory, device.instance as HvacZone);
           this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
-        } else if (!existingAccessory && device.type === 'outdoorUnit'){
+        } else if (!existingAccessory && device.type === 'outdoorUnit') {
           this.log.info('Adding new accessory:', device.displayName);
           const accessory = new this.api.platformAccessory(device.displayName, uuid);
           accessory.context.device = device;
