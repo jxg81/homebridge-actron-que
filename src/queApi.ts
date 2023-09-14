@@ -369,7 +369,6 @@ export default class QueApi {
       // Have updated the logic from version 1.2.8 to check field NV_Exists to determine if zone is populated as have found an example
       // where the master controller is also the zone controller. Validated this logic should work across four different sample systems.
       if (!zone['NV_Exists']) {
-        this.log.info('Unable to add zone : ', JSON.stringify(zone));
         continue;
       }
 
