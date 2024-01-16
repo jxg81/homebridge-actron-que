@@ -84,7 +84,7 @@ export class HvacUnit {
       if (targetInstance) {
         targetInstance.pushStatusUpdate(zone);
       } else {
-        const zoneBatteryChecking = this.wiredZoneSensors.includes(zone.zoneName) ? true : false;
+        const zoneBatteryChecking = this.wiredZoneSensors.includes(zone.zoneName) ? false : true;
         this.zoneInstances.push(new HvacZone(this.log, this.apiInterface, zone, zoneBatteryChecking));
       }
     }
