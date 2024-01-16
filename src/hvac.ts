@@ -33,7 +33,8 @@ export class HvacUnit {
      private readonly log: Logger,
      private readonly hbUserStoragePath: string,
      readonly zonesFollowMaster = true,
-    readonly zonesPushMaster = true) {
+     readonly zonesPushMaster = true,
+     readonly wiredZoneSensors: string[] = []) {
     this.name = name;
   }
 
@@ -83,7 +84,8 @@ export class HvacUnit {
       if (targetInstance) {
         targetInstance.pushStatusUpdate(zone);
       } else {
-        this.zoneInstances.push(new HvacZone(this.log, this.apiInterface, zone));
+        const zoneBatteryChecking = this.wiredZoneSensors.includes(zone.zoneName) ? true : false;
+        this.zoneInstances.push(new HvacZone(this.log, this.apiInterface, zone, zoneBatteryChecking));
       }
     }
     return status;

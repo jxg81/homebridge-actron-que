@@ -246,16 +246,16 @@ export class MasterControllerAccessory {
   async setFanMode(value: CharacteristicValue) {
     this.checkHvacComms();
     switch (true) {
-      case (value <= 30):
+      case (+value <= 30):
         await this.platform.hvacInstance.setFanModeLow();
         break;
-      case (value <= 60):
+      case (+value <= 60):
         await this.platform.hvacInstance.setFanModeMedium();
         break;
-      case (value <= 90):
+      case (+value <= 90):
         await this.platform.hvacInstance.setFanModeHigh();
         break;
-      case (value <= 100):
+      case (+value <= 100):
         await this.platform.hvacInstance.setFanModeAuto();
         break;
     }

@@ -22,6 +22,7 @@ export class HvacZone {
         private readonly log: Logger,
         readonly apiInterface: QueApi,
         zoneStatus: ZoneStatus,
+        readonly zoneBatteryChecking: boolean,
   ) {
 
     this.zoneName = zoneStatus.zoneName;
@@ -42,7 +43,7 @@ export class HvacZone {
       this.zoneHumiditySensor = false;
       this.currentHumidity = 0;
     } else {
-      this.zoneHumiditySensor = false;
+      this.zoneHumiditySensor = true;
       this.currentHumidity = zoneStatus.currentHumidity;
     }
   }
