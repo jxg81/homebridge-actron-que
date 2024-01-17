@@ -36,7 +36,8 @@ export class HvacZone {
     this.minCoolSetPoint = zoneStatus.minCoolSetPoint;
     this.currentHeatingSetTemp = zoneStatus.currentHeatingSetTemp;
     this.currentCoolingSetTemp = zoneStatus.currentCoolingSetTemp;
-    this.zoneSensorBattery = zoneStatus.zoneSensorBattery;
+    // wired sensors report battery level as 255; this prevents an error where battery level is set higher than 100
+    this.zoneSensorBattery = zoneStatus.zoneSensorBattery > 100 ? 100 : zoneStatus.zoneSensorBattery;
 
     // some zone sensor versions do not report humidity
     if (zoneStatus.currentHumidity === 'notSupported') {
@@ -57,7 +58,8 @@ export class HvacZone {
     this.minCoolSetPoint = zoneStatus.minCoolSetPoint;
     this.currentHeatingSetTemp = zoneStatus.currentHeatingSetTemp;
     this.currentCoolingSetTemp = zoneStatus.currentCoolingSetTemp;
-    this.zoneSensorBattery = zoneStatus.zoneSensorBattery;
+    // wired sensors report battery level as 255; this prevents an error where battery level is set higher than 100
+    this.zoneSensorBattery = zoneStatus.zoneSensorBattery > 100 ? 100 : zoneStatus.zoneSensorBattery;
     this.currentHumidity = this.zoneHumiditySensor ? zoneStatus.currentHumidity as number : 0;
   }
 
