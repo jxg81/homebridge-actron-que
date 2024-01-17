@@ -26,6 +26,10 @@ This is an 'almost' feature complete implementation of the Que platform in HomeK
  - Report battery level on zone sensors and get low battery alerts in the home app
  - Support for homebridge config UI
 
+ Fixes/Improvements in version 1.2.8
+ - Provide option to disable battery checking for hard wired zone controllers (preventing erroneous low battery reports). Cached accessories will need to be removed for changes to take effect.
+ - Corrected error in humidity sensor detection that may have prevented humidity sensor from being added for zone sensors that support humidity reading.
+
 Fixes/Improvements in version 1.2.7
  - Allow master controller to also operate as a zone controller
  - Resolved issue with logic controlling "Zones Push Master" temp adjustments which was causing setting to fail on first attempt
@@ -105,6 +109,10 @@ If you are not using the Homebridge config UI you can add the following to your 
             "zonesPushMaster": true | false,
             "refreshInterval": 60,
             "deviceSerial": "",
+            "wiredZoneSensors": [
+                "Zone Name 1",
+                "Zone Name 2",
+            ],
             "maxCoolingTemp": 32,
             "minCoolingTemp": 20,
             "maxHeatingTemp": 26,
@@ -180,6 +188,15 @@ type: string (lowercase)
 default: ""
 
 In most cases you can exclude this option or leave it blank. If you only have a single air con system in your Que account the plugin will auto-discover the target device serial number. If you have multiple Que systems in your account you will need to specify which system you want to control by entering the serial number here. You can get your device serial numbers by logging in to que.actronair.com.au and looking at the list of authorised devices.
+
+#### `wiredZoneSensors`
+
+type: array[string] (case sensitive)
+
+default: [] (empty array)
+
+An array of strings defining zone names utilising hardwired zone sensors. Zone names must match identically with the zone names configured within the Que controller. Be concious of case, spaces and any leading or trailing whitespace in the zone name.
+Configuring zones as hardwired will prevent creation of a battery monitoring service and suppress erroneous low battery alerts for these sensors.
 
 #### `maxCoolingTemp`
 

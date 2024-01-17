@@ -74,6 +74,7 @@
         "items": {
           "title": "Zone Name",
           "description": "Name of Zone as Defined on Master Controller",
+          "placeholder": "Enter zone name exactly as appears on controller - case sensitive",
           "type": "string"
         }
       },
