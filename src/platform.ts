@@ -3,6 +3,8 @@ import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { MasterControllerAccessory } from './masterControllerAccessory';
 import { ZoneControllerAccessory } from './zoneControllerAccessory';
+import { FanOnlyMasterAccessory } from './fanOnlyMasterAccessory';
+import { FanOnlyZoneAccessory } from './fanOnlyZoneAccessory';
 import { OutdoorUnitAccessory } from './outdoorUnitAccessory';
 import { HvacUnit } from './hvac';
 import { HvacZone } from './hvacZone';
@@ -20,6 +22,7 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
   readonly userProvidedSerialNo: string = '';
   readonly zonesFollowMaster: boolean = true;
   readonly zonesPushMaster: boolean = true;
+  readonly fanOnlyDevices: boolean = false;
   readonly wiredZoneSensors: string[] = [];
   readonly hardRefreshInterval: number = 60000;
   readonly softRefreshInterval: number = 5000;
@@ -55,6 +58,12 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
     } else {
       this.zonesPushMaster = true;
     }
+    if (config['fanOnlyDevices']) {
+      this.fanOnlyDevices = config['fanOnlyDevices'];
+      this.log.debug('Create Fan Only devices set to', this.fanOnlyDevices);
+    } else {
+      this.fanOnlyDevices = false;
+    }
     if (config['wiredZoneSensors']) {
       this.wiredZoneSensors = config['wiredZoneSensors'];
       this.log.debug('These zones are hardwired, battery checking is disabled', this.wiredZoneSensors);
@@ -63,7 +72,7 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
     }
     if (config['refreshInterval']) {
       this.hardRefreshInterval = config['refreshInterval'] * 1000;
-      this.log.debug('Auto refresh interval set to seconds', this.hardRefreshInterval/1000);
+      this.log.debug('Auto refresh interval set to seconds', this.hardRefreshInterval / 1000);
     } else {
       this.hardRefreshInterval = 60000;
     }
@@ -156,11 +165,27 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
           instance: zone,
         });
       }
+      if (this.fanOnlyDevices) {
+        devices.push({
+          type: 'fanOnlyMaster',
+          uniqueId: hvacSerial + '-fanOnly',
+          displayName: this.clientName + '-fanOnly',
+          instance: this.hvacInstance,
+        });
+        for (const zone of this.hvacInstance.zoneInstances) {
+          devices.push({
+            type: 'fanOnlyZone',
+            uniqueId: zone.sensorId + '-fanOnly',
+            displayName: zone.zoneName + '-fanOnly',
+            instance: zone,
+          });
+        }
+      }
       this.log.debug('Discovered Devices \n', devices);
       // loop over the discovered devices and register each one if it has not already been registered
       for (const device of devices) {
-      // create uuid first then see if an accessory with the same uuid has already been registered and restored from
-      // the cached devices we stored in the `configureAccessory` method above
+        // create uuid first then see if an accessory with the same uuid has already been registered and restored from
+        // the cached devices we stored in the `configureAccessory` method above
         const uuid = this.api.hap.uuid.generate(device.uniqueId);
         const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
 
@@ -177,25 +202,47 @@ export class ActronQuePlatform implements DynamicPlatformPlugin {
           this.log.info('Restoring Outdoor Unit accessory from cache:', existingAccessory.displayName);
           new OutdoorUnitAccessory(this, existingAccessory);
 
-        } else if (!existingAccessory && device.type === 'masterController'){
+        } else if (existingAccessory && device.type === 'fanOnlyMaster') {
+          this.log.info('Restoring Fan Only Master accessory from cache:', existingAccessory.displayName);
+          new FanOnlyMasterAccessory(this, existingAccessory);
+
+        } else if (existingAccessory && device.type === 'fanOnlyZone') {
+          this.log.info('Restoring Fan only Zone accessory from cache:', existingAccessory.displayName);
+          new FanOnlyZoneAccessory(this, existingAccessory, device.instance as HvacZone);
+
+        } else if (!existingAccessory && device.type === 'masterController') {
           this.log.info('Adding new accessory:', device.displayName);
           const accessory = new this.api.platformAccessory(device.displayName, uuid);
           accessory.context.device = device;
           new MasterControllerAccessory(this, accessory);
           this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
 
-        } else if (!existingAccessory && device.type === 'zoneController'){
+        } else if (!existingAccessory && device.type === 'zoneController') {
           this.log.info('Adding new accessory:', device.displayName);
           const accessory = new this.api.platformAccessory(device.displayName, uuid);
           accessory.context.device = device;
           new ZoneControllerAccessory(this, accessory, device.instance as HvacZone);
           this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
 
-        } else if (!existingAccessory && device.type === 'outdoorUnit'){
+        } else if (!existingAccessory && device.type === 'outdoorUnit') {
           this.log.info('Adding new accessory:', device.displayName);
           const accessory = new this.api.platformAccessory(device.displayName, uuid);
           accessory.context.device = device;
           new OutdoorUnitAccessory(this, accessory);
+          this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+
+        } else if (!existingAccessory && device.type === 'fanOnlyMaster') {
+          this.log.info('Adding new accessory:', device.displayName);
+          const accessory = new this.api.platformAccessory(device.displayName, uuid);
+          accessory.context.device = device;
+          new FanOnlyMasterAccessory(this, accessory);
+          this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+
+        } else if (!existingAccessory && device.type === 'fanOnlyZone') {
+          this.log.info('Adding new accessory:', device.displayName);
+          const accessory = new this.api.platformAccessory(device.displayName, uuid);
+          accessory.context.device = device;
+          new FanOnlyZoneAccessory(this, accessory, device.instance as HvacZone);
           this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
         }
       }

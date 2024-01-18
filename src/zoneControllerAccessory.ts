@@ -155,8 +155,18 @@ export class ZoneControllerAccessory {
   }
 
   getEnableState(): CharacteristicValue {
-    const enableState = (this.zone.zoneEnabled === true) ? 1 : 0;
-    // this.platform.log.debug(`Got Zone ${this.zone.zoneName} Enable State -> `, enableState);
+    // Check climate mode, if it is any value other than FAN then we are not in fan-only mode
+    // If it is FAN then we need to check if the zone is enabled
+    let enableState: number;
+    const climateMode = this.platform.hvacInstance.climateMode;
+    switch (climateMode) {
+      case ClimateMode.FAN:
+        enableState = 0;
+        break;
+      default:
+        enableState = (this.zone.zoneEnabled === true) ? 1 : 0;
+    }
+    this.platform.log.debug(`Got Zone ${this.zone.zoneName} Enable State -> `, enableState);
     return enableState;
   }
 
