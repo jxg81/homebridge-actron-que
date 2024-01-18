@@ -224,6 +224,10 @@ export class ZoneControllerAccessory {
       case ClimateMode.COOL:
         currentMode = this.platform.Characteristic.TargetHeaterCoolerState.COOL;
         break;
+      // Returning climate mode of Auto when fan-only is running
+      case ClimateMode.FAN:
+        currentMode = this.platform.Characteristic.TargetHeaterCoolerState.AUTO;
+        break;
       default:
         currentMode = 0;
         this.platform.log.debug('Failed To Get Target Climate Mode -> ', climateMode);
