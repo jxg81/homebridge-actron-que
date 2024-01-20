@@ -127,7 +127,14 @@ export class MasterControllerAccessory {
         await this.platform.hvacInstance.setPowerStateOff();
         break;
       case 1:
-        await this.platform.hvacInstance.setPowerStateOn();
+        // If the fan only mode is running, switch climate mode to cool instead of sending power on event
+        if (this.platform.hvacInstance.climateMode === ClimateMode.FAN) {
+          await this.platform.hvacInstance.setClimateModeCool();
+        }
+        // If power state is not ON - Turn on
+        if (this.platform.hvacInstance.powerState !== PowerState.ON) {
+          await this.platform.hvacInstance.setPowerStateOn();
+        }
         break;
     }
     this.platform.log.debug('Set Master Power State -> ', value);

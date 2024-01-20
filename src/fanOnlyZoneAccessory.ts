@@ -57,8 +57,14 @@ export class FanOnlyZoneAccessory {
         await this.zone.setZoneDisable();
         break;
       case 1:
-        await this.zone.setZoneEnable();
-        await this.platform.hvacInstance.setClimateModeFan();
+        // If the fan only mode is not running, switch climate mode to fan instead of sending enable event
+        if (this.platform.hvacInstance.climateMode !== ClimateMode.FAN) {
+          await this.platform.hvacInstance.setClimateModeFan();
+        }
+        // after checking mode, check if the state is enabled or not
+        if (this.zone.zoneEnabled === false) {
+          await this.zone.setZoneEnable();
+        }
         break;
     }
     this.platform.log.debug(`Set FanOnlyZone ${this.zone.zoneName} Enable State -> `, value);

@@ -148,7 +148,14 @@ export class ZoneControllerAccessory {
         await this.zone.setZoneDisable();
         break;
       case 1:
-        await this.zone.setZoneEnable();
+        // If the fan only mode is running, switch climate mode to cool instead of sending enable event
+        if (this.platform.hvacInstance.climateMode === ClimateMode.FAN) {
+          await this.platform.hvacInstance.setClimateModeCool();
+        }
+        // after checking mode, check if the state is enabled or not
+        if (this.zone.zoneEnabled === false) {
+          await this.zone.setZoneEnable();
+        }
         break;
     }
     this.platform.log.debug(`Set Zone ${this.zone.zoneName} Enable State -> `, value);
