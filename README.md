@@ -26,6 +26,9 @@ This is an 'almost' feature complete implementation of the Que platform in HomeK
  - Report battery level on zone sensors and get low battery alerts in the home app
  - Support for homebridge config UI
 
+Fixes/Improvements in version 1.5.0
+ - Now supports running in "Fan-Only" mode. An option has been added to the configuration to create a Fan accessory for each zone and the master controller (`Create FAN ONLY devices for each zone`). 
+
  Fixes/Improvements in version 1.2.8
  - Provide option to disable battery checking for hard wired zone controllers (preventing erroneous low battery reports). Cached accessories will need to be removed for changes to take effect.
  - Corrected error in humidity sensor detection that may have prevented humidity sensor from being added for zone sensors that support humidity reading.
@@ -66,7 +69,6 @@ New in version 1.1.0
 
 Limitations - These options cannot be set via HomeKit:
  - Quiet Mode
- - Fan Only Mode
  - Constant Fan Operation
  - Away Mode
 
@@ -109,6 +111,7 @@ If you are not using the Homebridge config UI you can add the following to your 
             "zonesPushMaster": true | false,
             "refreshInterval": 60,
             "deviceSerial": "",
+            "fanOnlyDevices": true | false,
             "wiredZoneSensors": [
                 "Zone Name 1",
                 "Zone Name 2",
@@ -188,6 +191,18 @@ type: string (lowercase)
 default: ""
 
 In most cases you can exclude this option or leave it blank. If you only have a single air con system in your Que account the plugin will auto-discover the target device serial number. If you have multiple Que systems in your account you will need to specify which system you want to control by entering the serial number here. You can get your device serial numbers by logging in to que.actronair.com.au and looking at the list of authorised devices.
+
+### `fanOnlyDevices`
+
+type: boolean 
+
+default: false
+
+Control creation of Fan Only accessories for each zone. When toggled on these accessories will put the system in Fan only mode. Fan speed can be controlled via the Master Controller accessory.
+- 1-10% = Auto speed
+- 11-30% = Low speed
+- 31-65% = Medium speed
+- 66-100% = High speed
 
 #### `wiredZoneSensors`
 
