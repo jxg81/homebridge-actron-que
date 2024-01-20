@@ -208,9 +208,9 @@ export class MasterControllerAccessory {
       case ClimateMode.COOL:
         currentMode = this.platform.Characteristic.TargetHeaterCoolerState.COOL;
         break;
-      // Returning climate mode of Auto when fan-only is running
+      // Returning climate mode of cool when fan-only is running
       case ClimateMode.FAN:
-        currentMode = this.platform.Characteristic.TargetHeaterCoolerState.AUTO;
+        currentMode = this.platform.Characteristic.TargetHeaterCoolerState.COOL;
         break;
       default:
         currentMode = 0;
