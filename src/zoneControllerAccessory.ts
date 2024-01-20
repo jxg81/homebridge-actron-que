@@ -8,7 +8,8 @@ export class ZoneControllerAccessory {
   private hvacService: Service;
   // some versions of the zone sensor do not support humidity
   private humidityService: Service | null;
-  private batteryService: Service;
+  // if sensors are hardwired it may be desirable to disable the battery service to avoid low battery alerts
+  private batteryService: Service | null;
 
   constructor(
     private readonly platform: ActronQuePlatform,
@@ -29,10 +30,6 @@ export class ZoneControllerAccessory {
     // Set accessory display name, this is taken from discover devices in platform
     this.hvacService.setCharacteristic(this.platform.Characteristic.Name, accessory.displayName);
 
-    // Get or create the humidity sensor service.
-    this.batteryService = this.accessory.getService(this.platform.Service.Battery)
-    || this.accessory.addService(this.platform.Service.Battery);
-
     // Get or create the humidity sensor service if the zone sensor supports humidity readings
     if (this.zone.zoneHumiditySensor) {
       this.humidityService = this.accessory.getService(this.platform.Service.HumiditySensor)
@@ -44,13 +41,20 @@ export class ZoneControllerAccessory {
       this.humidityService = null;
     }
 
-    // get battery low
-    this.batteryService.getCharacteristic(this.platform.Characteristic.StatusLowBattery)
-      .onGet(this.getBatteryStatus.bind(this));
-
-    // get battery level
-    this.batteryService.getCharacteristic(this.platform.Characteristic.BatteryLevel)
-      .onGet(this.getBatteryLevel.bind(this));
+    // If the zone sensor is hardwired it may be desirable to disable the battery service to avoid low battery alerts
+    if (this.zone.zoneBatteryChecking) {
+      // Get or create the battery monitoring service.
+      this.batteryService = this.accessory.getService(this.platform.Service.Battery)
+    || this.accessory.addService(this.platform.Service.Battery);
+      // get battery low
+      this.batteryService.getCharacteristic(this.platform.Characteristic.StatusLowBattery)
+        .onGet(this.getBatteryStatus.bind(this));
+      // get battery level
+      this.batteryService.getCharacteristic(this.platform.Characteristic.BatteryLevel)
+        .onGet(this.getBatteryLevel.bind(this));
+    } else {
+      this.batteryService = null;
+    }
 
     // register handlers for device control, references the class methods that follow for Set and Get
     this.hvacService.getCharacteristic(this.platform.Characteristic.Active)
@@ -101,8 +105,10 @@ export class ZoneControllerAccessory {
     this.hvacService.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.getCurrentTemperature());
     this.hvacService.updateCharacteristic(this.platform.Characteristic.HeatingThresholdTemperature, this.getHeatingThresholdTemperature());
     this.hvacService.updateCharacteristic(this.platform.Characteristic.CoolingThresholdTemperature, this.getCoolingThresholdTemperature());
-    this.batteryService.updateCharacteristic(this.platform.Characteristic.StatusLowBattery, this.getBatteryStatus());
-    this.batteryService.updateCharacteristic(this.platform.Characteristic.BatteryLevel, this.getBatteryLevel());
+    if (this.batteryService) {
+      this.batteryService.updateCharacteristic(this.platform.Characteristic.StatusLowBattery, this.getBatteryStatus());
+      this.batteryService.updateCharacteristic(this.platform.Characteristic.BatteryLevel, this.getBatteryLevel());
+    }
 
     if (this.humidityService) {
       this.humidityService.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.getHumidity());
@@ -142,15 +148,32 @@ export class ZoneControllerAccessory {
         await this.zone.setZoneDisable();
         break;
       case 1:
-        await this.zone.setZoneEnable();
+        // If the fan only mode is running, switch climate mode to cool instead of sending enable event
+        if (this.platform.hvacInstance.climateMode === ClimateMode.FAN) {
+          await this.platform.hvacInstance.setClimateModeCool();
+        }
+        // after checking mode, check if the state is enabled or not
+        if (this.zone.zoneEnabled === false) {
+          await this.zone.setZoneEnable();
+        }
         break;
     }
     this.platform.log.debug(`Set Zone ${this.zone.zoneName} Enable State -> `, value);
   }
 
   getEnableState(): CharacteristicValue {
-    const enableState = (this.zone.zoneEnabled === true) ? 1 : 0;
-    // this.platform.log.debug(`Got Zone ${this.zone.zoneName} Enable State -> `, enableState);
+    // Check climate mode, if it is any value other than FAN then we are not in fan-only mode
+    // If it is FAN then we need to check if the zone is enabled
+    let enableState: number;
+    const climateMode = this.platform.hvacInstance.climateMode;
+    switch (climateMode) {
+      case ClimateMode.FAN:
+        enableState = 0;
+        break;
+      default:
+        enableState = (this.zone.zoneEnabled === true) ? 1 : 0;
+    }
+    this.platform.log.debug(`Got Zone ${this.zone.zoneName} Enable State -> `, enableState);
     return enableState;
   }
 
@@ -208,6 +231,10 @@ export class ZoneControllerAccessory {
       case ClimateMode.COOL:
         currentMode = this.platform.Characteristic.TargetHeaterCoolerState.COOL;
         break;
+      // Returning climate mode of cool when fan-only is running
+      case ClimateMode.FAN:
+        currentMode = this.platform.Characteristic.TargetHeaterCoolerState.COOL;
+        break;
       default:
         currentMode = 0;
         this.platform.log.debug('Failed To Get Target Climate Mode -> ', climateMode);
@@ -225,17 +252,17 @@ export class ZoneControllerAccessory {
   async setHeatingThresholdTemperature(value: CharacteristicValue) {
     this.checkHvacComms();
     if (this.platform.hvacInstance.zonesPushMaster === true) {
-      if (value > this.zone.maxHeatSetPoint) {
+      if (+value > this.zone.maxHeatSetPoint) {
         await this.platform.hvacInstance.setHeatTemp(value as number);
         await this.platform.hvacInstance.getStatus();
-      } else if (value < this.zone.minHeatSetPoint) {
+      } else if (+value < this.zone.minHeatSetPoint) {
         await this.platform.hvacInstance.setHeatTemp(value as number + 2);
         await this.platform.hvacInstance.getStatus();
       }
     } else {
-      if (value > this.zone.maxHeatSetPoint) {
+      if (+value > this.zone.maxHeatSetPoint) {
         value = this.zone.maxHeatSetPoint;
-      } else if (value < this.zone.minHeatSetPoint) {
+      } else if (+value < this.zone.minHeatSetPoint) {
         value = this.zone.minHeatSetPoint;
       }
     }
@@ -253,20 +280,20 @@ export class ZoneControllerAccessory {
     this.checkHvacComms();
     if (this.platform.hvacInstance.zonesPushMaster === true) {
       this.platform.log.debug('zones push master is set to True');
-      if (value > this.zone.maxCoolSetPoint) {
+      if (+value > this.zone.maxCoolSetPoint) {
         await this.platform.hvacInstance.setCoolTemp(value as number - 2);
         this.platform.log.debug(`Value is greater than MAX cool set point of ${this.zone.maxCoolSetPoint}, SETTING MASTER TO -> `, value);
         await this.platform.hvacInstance.getStatus();
-      } else if (value < this.zone.minCoolSetPoint) {
+      } else if (+value < this.zone.minCoolSetPoint) {
         await this.platform.hvacInstance.setCoolTemp(value as number);
         this.platform.log.debug(`Value is less than MIN cool set point of ${this.zone.minCoolSetPoint}, SETTING MASTER TO -> `, value);
         await this.platform.hvacInstance.getStatus();
       }
     } else {
-      if (value > this.zone.maxCoolSetPoint) {
+      if (+value > this.zone.maxCoolSetPoint) {
         value = this.zone.maxCoolSetPoint;
         this.platform.log.debug(`Value is greater than max cool set point of ${this.zone.maxCoolSetPoint}, CHANGING TO -> `, value);
-      } else if (value < this.zone.minCoolSetPoint) {
+      } else if (+value < this.zone.minCoolSetPoint) {
         value = this.zone.minCoolSetPoint;
         this.platform.log.debug(`Value is less than MIN cool set point of ${this.zone.minCoolSetPoint}, CHANGING TO -> `, value);
       }

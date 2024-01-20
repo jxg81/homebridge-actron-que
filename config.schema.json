@@ -58,6 +58,31 @@
         "required": false,
         "placeholder": "Leave Blank If You Have A Single Que System - Plugin Will Auto Discover"
       },
+      "fanOnlyDevices": {
+        "title": "Create FAN ONLY devices for each zone",
+        "description": "Fan Only devices allow you to run the system in FAN mode",
+        "type": "boolean"
+      },
+      "defineWiredZoneSensors": {
+        "title": "Define Wired Zone Sensors to Disable Battery Checks",
+        "description": "All zones are assumed to be wireless by default with battery checks enabled",
+        "type": "boolean"
+      },
+      "wiredZoneSensors": {
+        "title": "Hardwired Zone Sensors",
+        "description": "Entering zone names here will disable battery checking on hardwired zones.",
+        "type": "array",
+        "required": false,
+        "condition": {
+          "functionBody": "return model.defineWiredZoneSensors === true;"
+        },
+        "items": {
+          "title": "Zone Name",
+          "description": "Name of Zone as Defined on Master Controller",
+          "placeholder": "Enter zone name exactly as appears on controller - case sensitive",
+          "type": "string"
+        }
+      },
       "adjustThresholds": {
       "title": " Modify default heating cooling threshold temperatures",
       "description": "Cooling default min/max = 20/32. Heating default min/max = 10/26",

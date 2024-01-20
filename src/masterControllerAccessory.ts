@@ -127,14 +127,27 @@ export class MasterControllerAccessory {
         await this.platform.hvacInstance.setPowerStateOff();
         break;
       case 1:
-        await this.platform.hvacInstance.setPowerStateOn();
+        // If the fan only mode is running, switch climate mode to cool instead of sending power on event
+        if (this.platform.hvacInstance.climateMode === ClimateMode.FAN) {
+          await this.platform.hvacInstance.setClimateModeCool();
+        }
+        // If power state is not ON - Turn on
+        if (this.platform.hvacInstance.powerState !== PowerState.ON) {
+          await this.platform.hvacInstance.setPowerStateOn();
+        }
         break;
     }
     this.platform.log.debug('Set Master Power State -> ', value);
   }
 
   getPowerState(): CharacteristicValue {
-    const powerState = (this.platform.hvacInstance.powerState === PowerState.ON) ? 1 : 0;
+    // Report as powered off if the fan mode is set to FAN
+    let powerState: number;
+    if (this.platform.hvacInstance.climateMode === ClimateMode.FAN) {
+      powerState = 0;
+    } else {
+      powerState = (this.platform.hvacInstance.powerState === PowerState.ON) ? 1 : 0;
+    }
     // this.platform.log.debug('Got Master Power State -> ', powerState);
     return powerState;
   }
@@ -195,6 +208,10 @@ export class MasterControllerAccessory {
       case ClimateMode.COOL:
         currentMode = this.platform.Characteristic.TargetHeaterCoolerState.COOL;
         break;
+      // Returning climate mode of cool when fan-only is running
+      case ClimateMode.FAN:
+        currentMode = this.platform.Characteristic.TargetHeaterCoolerState.COOL;
+        break;
       default:
         currentMode = 0;
         this.platform.log.debug('Failed To Get Master Target Climate Mode -> ', climateMode);
@@ -246,20 +263,20 @@ export class MasterControllerAccessory {
   async setFanMode(value: CharacteristicValue) {
     this.checkHvacComms();
     switch (true) {
-      case (value <= 30):
-        await this.platform.hvacInstance.setFanModeLow();
-        break;
-      case (value <= 60):
-        await this.platform.hvacInstance.setFanModeMedium();
-        break;
-      case (value <= 90):
-        await this.platform.hvacInstance.setFanModeHigh();
-        break;
-      case (value <= 100):
+      case (+value <= 10):
         await this.platform.hvacInstance.setFanModeAuto();
         break;
+      case (+value <= 30):
+        await this.platform.hvacInstance.setFanModeLow();
+        break;
+      case (+value <= 65):
+        await this.platform.hvacInstance.setFanModeMedium();
+        break;
+      case (+value <= 100):
+        await this.platform.hvacInstance.setFanModeHigh();
+        break;
     }
-    this.platform.log.debug('Set Master Fan Mode 91-100:Auto, 1-30:Low, 31-60:Medium, 61-90:High -> ', value);
+    this.platform.log.debug('Set Master Fan Mode 1-10:Auto, 11-30:Low, 31-65:Medium, 66-100:High -> ', value);
   }
 
   getFanMode(): CharacteristicValue {
@@ -267,22 +284,22 @@ export class MasterControllerAccessory {
     const fanMode = this.platform.hvacInstance.fanMode;
     switch (fanMode) {
       case FanMode.AUTO || FanMode.AUTO_CONT:
-        currentMode = 100;
+        currentMode = 10;
         break;
       case FanMode.LOW || FanMode.LOW_CONT:
-        currentMode = 29;
+        currentMode = 25;
         break;
       case FanMode.MEDIUM || FanMode.MEDIUM_CONT:
-        currentMode = 59;
+        currentMode = 50;
         break;
       case FanMode.HIGH || FanMode.HIGH_CONT:
-        currentMode = 89;
+        currentMode = 100;
         break;
       default:
         currentMode = 0;
         this.platform.log.debug('Failed To Get Master Current Fan Mode -> ', fanMode);
     }
-    // this.platform.log.debug('Got Master Current Fan Mode -> ', fanMode);
+    this.platform.log.debug('Got Master Current Fan Mode -> ', fanMode);
     return currentMode;
   }
 }
